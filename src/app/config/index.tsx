@@ -9,6 +9,7 @@ if (!projectId) {
   throw new Error('NEXT_PUBLIC_PROJECT_ID is not set');
 }
 export const networks = [mainnet, sepolia, solana, solanaTestnet, solanaDevnet];
+
 export const solanaWeb3JsAdapter = new SolanaAdapter({
   wallets: [new PhantomWalletAdapter(), new SolflareWalletAdapter()]
 });
