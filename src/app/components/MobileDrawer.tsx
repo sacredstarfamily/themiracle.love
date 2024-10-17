@@ -10,7 +10,7 @@ type MobileDrawerProps = {
     function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
     return (
       <div
-        className={`fixed flex flex-col justify-center items-center z-10 top-0 right-0 h-full w-full bg-black text-white transition-transform duration-300 transform ${
+        className={`fixed flex flex-col justify-center items-center z-10 top-0 right-0 h-full w-full bg-pink-950 text-white transition-transform duration-300 transform ${
           isOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
