@@ -1,10 +1,10 @@
 'use client';
 
 import React, { type ReactNode } from 'react';
-import { wagmiAdapter, projectId } from '../config/index';
+import { wagmiAdapter, projectId, solanaWeb3JsAdapter } from '../config/index';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { createAppKit } from '@reown/appkit/react';
-import {mainnet, sepolia} from '@reown/appkit/networks';
+import {mainnet, sepolia, solana, solanaDevnet, solanaTestnet} from '@reown/appkit/networks';
 
 import {cookieToInitialState, WagmiProvider, type Config} from 'wagmi';
 
@@ -19,8 +19,8 @@ export const metadata = {
     
 }
 export const modal = createAppKit({
-    adapters: [wagmiAdapter],
-    networks: [mainnet, sepolia],
+    adapters: [wagmiAdapter, solanaWeb3JsAdapter],
+    networks: [mainnet, sepolia, solana, solanaDevnet, solanaTestnet],
     projectId,
     features: {
         analytics: true, // Optional - defaults to your Cloud configuration
