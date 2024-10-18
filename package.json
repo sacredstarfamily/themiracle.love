@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "init-prisma": "npx prisma init",
+    "pull-db": "npx prisma db pull",
+    "push-db": "npx prisma db push",
+    "generate": "npx prisma generate",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
@@ -11,6 +15,7 @@
   "dependencies": {
     "@fortawesome/free-solid-svg-icons": "^6.6.0",
     "@fortawesome/react-fontawesome": "^0.2.2",
+    "@prisma/client": "^5.21.1",
     "@reown/appkit": "^1.0.7",
     "@reown/appkit-adapter-solana": "^1.0.7",
     "@reown/appkit-adapter-wagmi": "^1.0.7",
@@ -20,6 +25,7 @@
     "dotenv": "^16.4.5",
     "next": "14.2.9",
     "pg": "^8.13.0",
+    "prisma": "^5.21.1",
     "react": "^18",
     "react-dom": "^18",
     "viem": "^2.21.19",
