@@ -3,6 +3,7 @@ import React from 'react';
 import Navbar from '../components/Navbar';
 
 const LearnPage: React.FC = () => {
+   
     return (
         <div>
             <Navbar/>

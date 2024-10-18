@@ -1,5 +1,5 @@
 import {Pool} from 'pg';
-import { pool } from './db';
+
 
 const pool = new Pool({
   user: process.env.DB_USER,
