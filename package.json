@@ -6,6 +6,7 @@
     "init-prisma": "npx prisma init",
     "pull-db": "npx prisma db pull",
     "push-db": "npx prisma db push",
+    "migrate-db": "npx prisma migrate dev",
     "generate": "npx prisma generate",
     "dev": "next dev",
     "build": "next build",
