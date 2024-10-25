@@ -1,6 +1,7 @@
 'use server';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/pc';
+import nodemailer from 'nodemailer';
 
 export async function createUser(formData: FormData) {
     const name = formData.get('name') as string
@@ -14,6 +15,30 @@ export async function createUser(formData: FormData) {
             hashedPassword
         }
     });
+    if (user && process.env.NODE_ENV === 'production') {
+          const transporter = nodemailer.createTransport({
+              host: 'themiracle.love',
+              port: 465,
+              secure: false,
+              auth: {
+                  user: process.env.EMAIL_USER,
+                  pass: process.env.EMAIL_PASS
+              }
+          });
+          const mailOptions = {
+              from: process.env.EMAIL_USER,
+              to: email,
+              subject: 'Registration Confirmation',
+              text: 'Thank you for registering!'
+          };
+          transporter.sendMail(mailOptions, function(error, info){
+              if (error) {
+                  console.log(error);
+              } else {
+                  console.log('Email sent: ' + info.response);
+              }
+          });
+    }
     console.log(user, name, email, hashedPassword);
 }
 
