@@ -1,7 +1,13 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 'use server';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/pc';
 import nodemailer from 'nodemailer';
+
+type LoginData = {
+    data: string | null
+}
+
 
 export async function createUser(formData: FormData) {
     const name = formData.get('name') as string
@@ -42,7 +48,7 @@ export async function createUser(formData: FormData) {
     console.log(user, name, email, hashedPassword);
 }
 
-export async function loginUser(prevState: any, formData: FormData) {
+export async function loginUser(prevState: LoginData | undefined, formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const user = await prisma.user.findFirst({
@@ -51,7 +57,7 @@ export async function loginUser(prevState: any, formData: FormData) {
         }
     });
     if (!user) {
-        console.log('no user');
+        return {...prevState, data: "Invalid email or password"}
     }
     const pasCheck = await bcrypt.compare(password, user!.hashedPassword);
     if(!pasCheck)
@@ -60,7 +66,7 @@ export async function loginUser(prevState: any, formData: FormData) {
     }
     if(pasCheck)
     {
-        return {...prevState, data: user.name}
+        return {...prevState, data: user!.name}
     }
  /* 
    const user = await prisma.user.findFirst({
