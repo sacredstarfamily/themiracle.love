@@ -30,7 +30,9 @@ export async function loginUser(formData: FormData) {
     }
     const pasCheck = await bcrypt.compare(password, user!.hashedPassword);
     if(!pasCheck)
-        {throw new Error('Invalid email or password');}
+    {
+        console.log('no user');
+    }
     if(pasCheck)
     {
         console.log('user found');
