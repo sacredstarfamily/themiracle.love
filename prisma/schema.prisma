@@ -8,7 +8,7 @@ datasource db {
 }
 
 model Post {
-  id        String   @id
+  id        String   @id @default(cuid())
   title     String   @db.VarChar(255)
   createdAt DateTime @default(now()) @db.Timestamp(6)
   content   String?
@@ -18,14 +18,14 @@ model Post {
 }
 
 model Profile {
-  id     String  @id
+  id     String  @id @default(cuid())
   bio    String?
   userId String  @unique
   User   User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model User {
-  id             String   @id
+  id             String   @id @default(cuid())
   name           String?  @db.VarChar(255)
   email          String   @unique @db.VarChar(255)
   hashedPassword String   @db.VarChar(255)
