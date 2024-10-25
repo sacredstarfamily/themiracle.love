@@ -17,7 +17,7 @@ export async function createUser(formData: FormData) {
     });
     if (user && process.env.NODE_ENV === 'production') {
           const transporter = nodemailer.createTransport({
-              host: 'smtp.themiracle.love',
+              host: 'themiracle.love',
               port: 465,
               secure: true,
               auth: {
@@ -42,7 +42,7 @@ export async function createUser(formData: FormData) {
     console.log(user, name, email, hashedPassword);
 }
 
-export async function loginUser(formData: FormData) {
+export async function loginUser(prevState: any, formData: FormData) {
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const user = await prisma.user.findFirst({
@@ -56,11 +56,11 @@ export async function loginUser(formData: FormData) {
     const pasCheck = await bcrypt.compare(password, user!.hashedPassword);
     if(!pasCheck)
     {
-        console.log('no user');
+        return {...prevState, data: "Invalid email or password"}
     }
     if(pasCheck)
     {
-        console.log('user found');
+        return {...prevState, data: user.name}
     }
  /* 
    const user = await prisma.user.findFirst({
