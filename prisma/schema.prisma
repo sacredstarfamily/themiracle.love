@@ -8,26 +8,27 @@ datasource db {
 }
 
 model Post {
-  id        Int      @id @default(autoincrement())
+  id        String   @id
   title     String   @db.VarChar(255)
   createdAt DateTime @default(now()) @db.Timestamp(6)
   content   String?
   published Boolean  @default(false)
-  authorId  Int
+  authorId  String
   User      User     @relation(fields: [authorId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Profile {
-  id     Int     @id @default(autoincrement())
+  id     String  @id
   bio    String?
-  userId Int     @unique
+  userId String  @unique
   User   User    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model User {
-  id      Int      @id @default(autoincrement())
-  name    String?  @db.VarChar(255)
-  email   String   @unique @db.VarChar(255)
-  Post    Post[]
-  Profile Profile?
+  id             String   @id
+  name           String?  @db.VarChar(255)
+  email          String   @unique @db.VarChar(255)
+  hashedPassword String   @db.VarChar(255)
+  Post           Post[]
+  Profile        Profile?
 }

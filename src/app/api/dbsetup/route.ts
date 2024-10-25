@@ -1,4 +1,12 @@
+import { NextResponse } from "next/server";
+//import conn from "../lib/db";
 
-export default async function GET() {
-    return new Response("Hello, world!");
-  }
+
+export async function GET() {
+  
+    return NextResponse.json({ message:"p" }, { status: 200 })
+ }
+
+export async function POST() {
+    return NextResponse.json({ message: "POST Request" }, { status: 200 })
+}
