@@ -17,9 +17,9 @@ export async function createUser(formData: FormData) {
     });
     if (user && process.env.NODE_ENV === 'production') {
           const transporter = nodemailer.createTransport({
-              host: 'themiracle.love',
+              host: 'smtp.themiracle.love',
               port: 465,
-              secure: false,
+              secure: true,
               auth: {
                   user: process.env.EMAIL_USER,
                   pass: process.env.EMAIL_PASS
@@ -33,9 +33,9 @@ export async function createUser(formData: FormData) {
           };
           transporter.sendMail(mailOptions, function(error, info){
               if (error) {
-                  console.log(error);
+                  return error
               } else {
-                  console.log('Email sent: ' + info.response);
+                 return info
               }
           });
     }
