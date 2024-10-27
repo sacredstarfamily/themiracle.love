@@ -2,7 +2,8 @@
 'use server';
 import bcrypt from 'bcrypt';
 import prisma from '../lib/pc';
-import nodemailer from 'nodemailer';
+
+import { Prisma } from '@prisma/client';
 
 type LoginData = {
     data: string | null
@@ -14,52 +15,32 @@ export async function createUser(prevState: LoginData | undefined, formData: For
     const email = formData.get('email') as string
     const password = formData.get('password') as string
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = await prisma.user.create({
+    try {
+     await prisma.user.create({
         data: {
             name,
             email,
             hashedPassword
         }
     });
-    if (user && process.env.NODE_ENV === 'production') {
-          const transporter = nodemailer.createTransport({
-              host: 'smtp.themiracle.love',
-              port: 465,
-              secure: false,
-              auth: {
-                  user: process.env.EMAIL_USER,
-                  pass: process.env.EMAIL_PASS
-              }
-          });
-          const mailOptions = {
-              from: process.env.EMAIL_USER,
-              to: email,
-              subject: 'Registration Confirmation',
-              text: 'Thank you for registering!'
-          };
-          let transporterReady;
-        transporter.verify(function(error, success) {
-              if (error) {
-                  transporterReady = false
-              } else if(success){
-                  transporterReady = true
-              }
-          });
-          if (transporterReady) {
-            transporter.sendMail(mailOptions, function(error, info){
-                if (error) {
-                    return {...prevState, data: error.message}
-                } else {
-                   return {...prevState, data: 'Email sent: ' + info.response}
-                }
-            });
-          }
-          
-          return {...prevState, data: user.name}
+
+    const check = await fetch('https://themiracle.love/completeSignup.php', {
+        method: 'POST',
+        body: JSON.stringify({"name": name, "email": email}),
+    })
+    const data = await check.json();
+    console.log(data);
+    console.log(check.status);
+    if(check.status === 200){
+    return {...prevState, data: data.message}
     }
-    if (user) {
-        return {...prevState, data: user.name}
+} catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+          return {...prevState, data: "Email already exists"}
     }
+}
+
+    
 }
 
 export async function loginUser(prevState: LoginData | undefined, formData: FormData) {
