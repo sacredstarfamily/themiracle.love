@@ -80,3 +80,16 @@ export async function loginUser(prevState: LoginData | undefined, formData: Form
     return user; */
     console.log(email, password);
 }
+export async function deleteUserData(prevState: LoginData | undefined, formData: FormData) {
+    const user = await prisma.user.deleteMany(
+        {
+            where: {
+                email: formData.get('email') as string
+            }
+        }
+    );
+  if(user){
+    console.log(user);
+      return {...prevState, data: "User deleted"}
+  }
+}

@@ -1,4 +1,4 @@
-import { loginUser } from '@/actions/actions';
+import { loginUser, deleteUserData } from '@/actions/actions';
 import {useFormState} from 'react-dom';
 
 const INITIAL_STATE = {
@@ -8,6 +8,7 @@ const INITIAL_STATE = {
 
 export default function Login() {
    const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
+   const [delFormState, delFormAction] = useFormState(deleteUserData, INITIAL_STATE);
     return (
         <div>
             <h1>Login</h1>
@@ -17,6 +18,11 @@ export default function Login() {
                 <input type="password" name="password" />
              
                 <button type="submit">Login</button>
+            </form>
+            <form action={delFormAction}>
+                <p>{delFormState?.data}</p>
+                <input type="text" name="email" />
+                <button type="submit">Delete</button>
             </form>
         </div>
     )

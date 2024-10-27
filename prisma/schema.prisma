@@ -29,6 +29,7 @@ model User {
   name           String?  @db.VarChar(255)
   email          String   @unique @db.VarChar(255)
   hashedPassword String   @db.VarChar(255)
+  walletAddress  String?
   Post           Post[]
   Profile        Profile?
 }
