@@ -37,11 +37,12 @@ export async function createUser(prevState: LoginData | undefined, formData: For
               subject: 'Registration Confirmation',
               text: 'Thank you for registering!'
           };
-          const trasporterReady = transporter.verify(function(error, success) {
+          let trasporterReady;
+        transporter.verify(function(error, success) {
               if (error) {
-                  return false
+                  transporterReady = false
               } else if(success){
-                  return true
+                  trasporterReady = true
               }
           });
           if (trasporterReady) {
