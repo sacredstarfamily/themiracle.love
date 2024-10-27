@@ -9,7 +9,7 @@ type LoginData = {
 }
 
 
-export async function createUser(formData: FormData) {
+export async function createUser(prevState: LoginData | undefined, formData: FormData) {
     const name = formData.get('name') as string
     const email = formData.get('email') as string
     const password = formData.get('password') as string
@@ -23,9 +23,9 @@ export async function createUser(formData: FormData) {
     });
     if (user && process.env.NODE_ENV === 'production') {
           const transporter = nodemailer.createTransport({
-              host: 'themiracle.love',
+              host: 'smtp.themiracle.love',
               port: 465,
-              secure: true,
+              secure: false,
               auth: {
                   user: process.env.EMAIL_USER,
                   pass: process.env.EMAIL_PASS
@@ -37,15 +37,28 @@ export async function createUser(formData: FormData) {
               subject: 'Registration Confirmation',
               text: 'Thank you for registering!'
           };
-          transporter.sendMail(mailOptions, function(error, info){
+          const trasporterReady = transporter.verify(function(error, success) {
               if (error) {
-                  return error
-              } else {
-                 return info
+                  return false
+              } else if(success){
+                  return true
               }
           });
+          if (trasporterReady) {
+            transporter.sendMail(mailOptions, function(error, info){
+                if (error) {
+                    return {...prevState, data: error.message}
+                } else {
+                   return {...prevState, data: 'Email sent: ' + info.response}
+                }
+            });
+          }
+          
+          return {...prevState, data: user.name}
     }
-    console.log(user, name, email, hashedPassword);
+    if (user) {
+        return {...prevState, data: user.name}
+    }
 }
 
 export async function loginUser(prevState: LoginData | undefined, formData: FormData) {
