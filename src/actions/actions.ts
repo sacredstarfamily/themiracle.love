@@ -37,15 +37,15 @@ export async function createUser(prevState: LoginData | undefined, formData: For
               subject: 'Registration Confirmation',
               text: 'Thank you for registering!'
           };
-          let trasporterReady;
+          let transporterReady;
         transporter.verify(function(error, success) {
               if (error) {
                   transporterReady = false
               } else if(success){
-                  trasporterReady = true
+                  transporterReady = true
               }
           });
-          if (trasporterReady) {
+          if (transporterReady) {
             transporter.sendMail(mailOptions, function(error, info){
                 if (error) {
                     return {...prevState, data: error.message}
