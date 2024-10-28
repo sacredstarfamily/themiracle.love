@@ -13,7 +13,7 @@ export default function FormWrapper() {
 
   return (
     <>
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm">
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
         <Image
           className="mx-auto h-20 w-auto"
           alt=""
@@ -23,16 +23,16 @@ export default function FormWrapper() {
         />
 
         {isLogin ? <Login /> : <Signup />}
-        <button onClick={handleToggle}>
+        <button className='self-center mx-auto' onClick={handleToggle}>
           {isLogin ? (
-            <>
-              <p className="mt-10 text-center text-sm text-gray-500">
+            <div className='w-auto justify-center align-middle self-center'>
+              <p className=" text-center text-sm text-gray-900 self-center">
                 Not a member?{" "}
                 <span className="font-semibold leading-6 text-indigo-600 hover:text-indigo-500">
                   Sign Up Here
                 </span>
               </p>
-            </>
+            </div>
           ) : (
             <>
               <p className="mt-10 text-center text-sm text-gray-500">

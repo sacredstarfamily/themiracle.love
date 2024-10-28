@@ -8,13 +8,13 @@ export default function Home() {
   return (
     <>
       <Navbar />
-      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-walto-graph)]">
+      <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-cheri)]">
         <main className="flex flex-col gap-8 row-start-2 items-center sm:items-start">
-          <h1 className="text-4xl sm:text-6xl font-[family-name:var(--font-walto-graph)]">
+          <h1 className="text-4xl sm:text-6xl font-[family-name:var(--font-cheri)]">
             Connect To Your Wallet
           </h1>
           <w3m-button />
-          <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
+          <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-cheri)]">
             <li className="mb-2">
               Life can be very hard and alot of people are suffering .
             </li>

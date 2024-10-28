@@ -17,14 +17,14 @@ function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         <FontAwesomeIcon className="text-5xl" icon={faXmark} />
       </button>
       <ul className="flex flex-col justify-center items-center space-y-4">
-        <li className="text-3xl hover:text-blue-900 hover:font-semibold">
+        <li className="text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
           <Link href="/">Home</Link>
         </li>
-        <li className="text-3xl hover:text-blue-900 hover:font-semibold">
+        <li className="text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
           <Link href="/learn">Learn</Link>
         </li>
-        <li>
-          <Link href="/auth">Signup/Login</Link>
+        <li className = "text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
+          <Link href="/auth">Signup@Login</Link>
         </li>
       </ul>
     </div>

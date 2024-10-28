@@ -2,11 +2,17 @@ import localFont from "next/font/local";
 import "./globals.css";
 import { headers } from "next/headers";
 import ContextProvider from "./context/index";
-const waltoGraph = localFont({
+/* const waltoGraph = localFont({
   src: "./fonts/waltograph42.ttf",
   variable: "--font-walto-graph",
   weight: "100 900",
+}); */
+const cheri = localFont({
+  src: "./fonts/cheri.ttf",
+  variable: "--font-cheri",
+  weight: "100 900",
 });
+
 /*
 const geistSans = localFont({
   src: "./fonts/GeistVF.woff",
@@ -29,7 +35,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full bg-pink-100 p-0 m-0">
       <body
-        className={`${waltoGraph.variable} ${waltoGraph.variable} antialiased`}
+        className={`${cheri.variable} ${cheri.variable} antialiased`}
       >
         <ContextProvider cookies={cookies}>{children}</ContextProvider>
       </body>
