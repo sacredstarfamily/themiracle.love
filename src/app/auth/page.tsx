@@ -1,27 +1,11 @@
-'use client';
+import FormWrapper from "./FormWrapper";
 
-import {useState} from 'react';
-import Login from './Login';
-import Signup from './Signup';
 export default function AuthPage() {
-    const [showSignUp, setShowSignUp] = useState(false);
-    const showSignUpHandler = () => {
-        setShowSignUp(previousState => !previousState);
-    }
-    if(showSignUp) {
-        return (
-            <div>
-                <h1>Sign Up Page</h1>
-                <Signup />
-                <button onClick={showSignUpHandler}>Log In</button>
-            </div>
-        )
-    }
-    return (
-        <div>
-            <h1>Login Page</h1>
-            <Login />
-            <button onClick={showSignUpHandler}>Sign Up</button>
-        </div>
-    )
+  return (
+    <>
+      <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
+        <FormWrapper />
+      </div>
+    </>
+  );
 }

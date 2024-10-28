@@ -4,4 +4,4 @@ export default function Footer() {
       <p>&copy; 2021 themiracle.love</p>
     </footer>
   );
-}   
+}
