@@ -1,4 +1,4 @@
-import { loginUser, deleteUserData } from "@/actions/actions";
+import { loginUser } from "@/actions/actions";
 import { useFormState } from "react-dom";
 
 const INITIAL_STATE = {
@@ -7,14 +7,11 @@ const INITIAL_STATE = {
 
 export default function Login() {
   const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
-  const [delFormState, delFormAction] = useFormState(
-    deleteUserData,
-    INITIAL_STATE,
-  );
+
   return (
     <>
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+      <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Log in to your account
         </h2>
         <form action={formAction} className="space-y-6">
@@ -79,11 +76,7 @@ export default function Login() {
         <p>{formState?.data}</p>
       </div>
 
-      <form action={delFormAction}>
-        <p>{delFormState?.data}</p>
-        <input type="text" name="email" />
-        <button type="submit">Delete</button>
-      </form>
+     
     </>
   );
 }

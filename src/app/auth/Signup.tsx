@@ -24,8 +24,8 @@ export default function Signup() {
   );
   return (
     <>
-      <div className="mt-10 sm:mx-auto sm:w-full sm:max-w-sm">
-        <h2 className="mt-10 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
+      <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">
+        <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Sign Up for an account
         </h2>
         <form action={signupAction} className="space-y-6">
@@ -36,7 +36,7 @@ export default function Signup() {
             >
               Name
             </label>
-            <div className="mt-2">
+            <div className="mt-1">
               <input
                 id="name"
                 name="name"
