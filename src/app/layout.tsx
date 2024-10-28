@@ -27,7 +27,7 @@ export default async function RootLayout({
   const cookies = headers().get("cookie");
 
   return (
-    <html lang="en">
+    <html lang="en" className="h-full bg-pink-100 p-0 m-0">
       <body
         className={`${waltoGraph.variable} ${waltoGraph.variable} antialiased`}
       >

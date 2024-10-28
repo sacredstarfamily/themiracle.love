@@ -9,17 +9,20 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #f2c2eb;
+    --background: #ffdbfa;
     --foreground: #712e2e;
   }
 }
 
 body {
   color: var(--foreground);
-  background: var(--background);
+  background: linear-gradient(#fcb6d9, #bc0061);
+  /*background: var(--background);*/
   font-family: Arial, Helvetica, sans-serif;
 }
-
+footer {
+  background: linear-gradient(#bc0061, #712e2e);
+}
 @layer utilities {
   .text-balance {
     text-wrap: balance;

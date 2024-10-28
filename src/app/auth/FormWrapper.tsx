@@ -15,11 +15,11 @@ export default function FormWrapper() {
     <>
       <div className="sm:mx-auto sm:w-full sm:max-w-sm">
         <Image
-          className="mx-auto h-10 w-auto"
+          className="mx-auto h-20 w-auto"
           alt=""
           src={logo}
-          width={50}
-          height={50}
+          width={1000}
+          height={1000}
         />
 
         {isLogin ? <Login /> : <Signup />}

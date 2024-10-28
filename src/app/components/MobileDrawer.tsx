@@ -9,7 +9,7 @@ type MobileDrawerProps = {
 function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
   return (
     <div
-      className={`fixed flex flex-col justify-center items-center z-10 top-0 right-0 h-full w-full bg-pink-950 text-white transition-transform duration-300 transform ${
+      className={`fixed flex flex-col justify-center items-center z-10 top-0 right-0 h-full w-full bg-pink-300 text-rose-950 transition-transform duration-300 transform ${
         isOpen ? "translate-x-0" : "translate-x-full"
       }`}
     >
@@ -22,6 +22,9 @@ function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         </li>
         <li className="text-3xl hover:text-blue-900 hover:font-semibold">
           <Link href="/learn">Learn</Link>
+        </li>
+        <li>
+          <Link href="/auth">Signup/Login</Link>
         </li>
       </ul>
     </div>
