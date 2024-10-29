@@ -1,7 +1,7 @@
 import Link from "next/link";
-import Image from 'next/image';
-import Logo from './rect4.png';
-import styles from '../main.module.css';
+import Image from "next/image";
+import Logo from "./rect4.png";
+import styles from "../main.module.css";
 function LogoLink() {
   return (
     <div className=" mb-1 text-center ml-2 w-30 sm:mb-0">

@@ -15,9 +15,6 @@ export default function Home() {
           </h1>
           <w3m-button />
           <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-cheri)]">
-            <li className="mb-2">
-              Life can be very hard and alot of people are suffering .
-            </li>
             <li>Help the world by creating art and supporting artists</li>
           </ol>
 

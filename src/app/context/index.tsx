@@ -32,7 +32,11 @@ export const modal = createAppKit({
     socials: ["x"], // Optional - defaults to your Cloud configuration
     emailShowWallets: true,
   },
-  themeMode: "dark",
+  themeMode: "light",
+  themeVariables: {
+    "--w3m-color-mix": "#00BB7F",
+    "--w3m-color-mix-strength": 40,
+  },
 });
 
 function ContextProvider({

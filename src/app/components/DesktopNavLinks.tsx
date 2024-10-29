@@ -9,9 +9,7 @@ function DesktopNavLinks() {
         <Link href="/learn">Learn</Link>
       </li>
       <li className="text-lg hover:text-blue-900 hover:font-semibold">
-        <Link href="/auth">
-        SignUp/Login
-        </Link>
+        <Link href="/auth">SignUp/Login</Link>
       </li>
     </ul>
   );

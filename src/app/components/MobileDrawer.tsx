@@ -23,7 +23,7 @@ function MobileDrawer({ isOpen, onClose }: MobileDrawerProps) {
         <li className="text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
           <Link href="/learn">Learn</Link>
         </li>
-        <li className = "text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
+        <li className="text-xl hover:text-blue-600 hover:font-semibold font-[family-name:var(--font-cheri)]">
           <Link href="/auth">Signup@Login</Link>
         </li>
       </ul>

@@ -34,7 +34,7 @@ export async function createUser(
       data: {
         name,
         email,
-        hashedPassword,
+        hashedPassword
       },
     });
 
@@ -90,6 +90,9 @@ export async function loginUser(
         {throw new Error('Invalid email or password');}
     return user; */
   console.log(email, password);
+}
+export async function verifyEmail(){
+  
 }
 export async function deleteUserData(
   prevState: LoginData | undefined,

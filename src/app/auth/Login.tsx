@@ -75,8 +75,6 @@ export default function Login() {
 
         <p>{formState?.data}</p>
       </div>
-
-     
     </>
   );
 }

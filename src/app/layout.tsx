@@ -34,9 +34,7 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className="h-full bg-pink-100 p-0 m-0">
-      <body
-        className={`${cheri.variable} ${cheri.variable} antialiased`}
-      >
+      <body className={`${cheri.variable} ${cheri.variable} antialiased`}>
         <ContextProvider cookies={cookies}>{children}</ContextProvider>
       </body>
     </html>

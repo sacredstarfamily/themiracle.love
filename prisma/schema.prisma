@@ -25,11 +25,26 @@ model Profile {
 }
 
 model User {
-  id             String   @id @default(cuid())
-  name           String?  @db.VarChar(255)
-  email          String   @unique @db.VarChar(255)
-  hashedPassword String   @db.VarChar(255)
-  walletAddress  String?
-  Post           Post[]
-  Profile        Profile?
+  id                String    @id @default(cuid())
+  name              String?   @db.VarChar(255)
+  email             String    @unique @db.VarChar(255)
+  hashedPassword    String    @db.VarChar(255)
+  verificationToken String    @default(uuid())
+  sessionToken      String?   @db.VarChar(255)
+  emailVerified     Boolean   @default(false)
+  walletAddress     String?
+  Post              Post[]
+  Profile           Profile?
+  Sessions          Sessions?
+
+  @@unique([id, sessionToken])
+}
+
+model Sessions {
+  sessionId String   @unique
+  userId    String   @unique
+  User      User     @relation(fields: [userId, sessionId], references: [id, sessionToken], onDelete: NoAction, onUpdate: NoAction)
+  ExpiresAt DateTime
+
+  @@unique([userId, sessionId])
 }
