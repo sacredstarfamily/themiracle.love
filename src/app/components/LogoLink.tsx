@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import Logo from "./rect4.png";
+import Logo from "./wordlogo.png";
 import styles from "../main.module.css";
 function LogoLink() {
   return (
