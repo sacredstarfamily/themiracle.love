@@ -11,11 +11,12 @@ export default function FormWrapper() {
   };
 
   return (
-    <>
-      <div className="sm:mx-auto sm:w-full sm:max-w-sm flex min-h-full flex-1 flex-col justify-center px-6 py-1 lg:px-8">
+    
+      <div className="sm:mx-auto sm:w-full sm:max-w-sm flex min-h-screen flex-1 flex-col justify-center px-6 py-1 lg:px-8">
         {isLogin ? <Login /> : <Signup />}
         <button className="self-center mx-auto" onClick={handleToggle}>
           {isLogin ? (
+            
             <div className="w-auto justify-center align-middle self-center">
               <p className="mt-10 text-center text-sm text-gray-900 self-center">
                 Not a member?{" "}
@@ -36,6 +37,6 @@ export default function FormWrapper() {
           )}
         </button>
       </div>
-    </>
+    
   );
 }

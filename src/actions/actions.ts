@@ -4,7 +4,8 @@ import bcrypt from "bcrypt";
 import prisma from "../lib/pc";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-
+import { encrypt } from '../lib/sessions';
+import { cookies } from "next/headers";
 type LoginData = {
   data: string | null;
 };
@@ -22,6 +23,20 @@ export async function createUser(
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
   const hashedPassword = await bcrypt.hash(password, 10);
+  const expiresAt: Date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+  const session = await encrypt({ email, expiresAt });
+  cookies().set(
+    'session',
+    session,
+    {
+      httpOnly: true,
+      secure: true,
+      expires: expiresAt,
+      sameSite: 'lax',
+      path: '/',
+    }
+  )
+
   try {
     signUpSchema.parse({ name, email, password });
   } catch (error) {
@@ -30,23 +45,35 @@ export async function createUser(
     }
   }
   try {
-    await prisma.user.create({
+   
+   const user = await prisma.user.create({
       data: {
         name,
         email,
-        hashedPassword
+        hashedPassword,
+        sessionToken: session
       },
     });
-
+   const dbSession = await prisma.session.create({
+      data: {
+        userId: user.id,
+        ExpiresAt: expiresAt,
+        sessionId: session,
+      }
+    }
+  );
+  console.log('dbSession', dbSession)
     const check = await fetch("https://themiracle.love/completeSignup.php", {
       method: "POST",
-      body: JSON.stringify({ name: name, email: email }),
+      body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
     });
     const data = await check.json();
+   
     console.log(data);
     console.log(check.status);
     if (check.status === 200) {
-      return { ...prevState, data: data.message };
+    
+      return { ...prevState, data: data.message  };
     }
   } catch (error) {
     if (
@@ -91,9 +118,28 @@ export async function loginUser(
     return user; */
   console.log(email, password);
 }
-export async function verifyEmail(){
-  
+export async function verifyEmail(token: string){
+  const user = await prisma.user.findFirst({
+    where: {
+      verificationToken: token,
+    },
+  });
+  if(!user){
+    return {data: "Invalid token"};
+  }
+  const updatedUser = await prisma.user.update({
+    where: {
+      id: user.id,
+    },
+    data: {
+      emailVerified: true,
+    },
+  });
+  if(updatedUser.emailVerified){
+    return {data: "Email verified"};
+  }
 }
+
 export async function deleteUserData(
   prevState: LoginData | undefined,
   formData: FormData,

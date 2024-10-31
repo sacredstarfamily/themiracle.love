@@ -25,26 +25,46 @@ model Profile {
 }
 
 model User {
-  id                String    @id @default(cuid())
-  name              String?   @db.VarChar(255)
-  email             String    @unique @db.VarChar(255)
-  hashedPassword    String    @db.VarChar(255)
-  verificationToken String    @default(uuid())
-  sessionToken      String?   @db.VarChar(255)
-  emailVerified     Boolean   @default(false)
+  id                String   @id @default(cuid())
+  name              String?  @db.VarChar(255)
+  email             String   @unique @db.VarChar(255)
+  hashedPassword    String   @db.VarChar(255)
+  verificationToken String   @default(uuid())
+  sessionToken      String?  @db.VarChar(255)
+  emailVerified     Boolean  @default(false)
   walletAddress     String?
   Post              Post[]
   Profile           Profile?
-  Sessions          Sessions?
+  Session           Session?
+  Order             Order[]
 
   @@unique([id, sessionToken])
 }
 
-model Sessions {
+model Session {
   sessionId String   @unique
   userId    String   @unique
   User      User     @relation(fields: [userId, sessionId], references: [id, sessionToken], onDelete: NoAction, onUpdate: NoAction)
   ExpiresAt DateTime
 
   @@unique([userId, sessionId])
+}
+
+model Order {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now()) @db.Timestamp(6)
+  updatedAt DateTime @default(now()) @db.Timestamp(6)
+  status    String   @default("PENDING")
+  userId    String
+  User      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  items     Item[]
+}
+
+model Item {
+  id       String @id @default(cuid())
+  name     String
+  price    Float
+  quantity Int
+  orderId  String
+  Order    Order  @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }

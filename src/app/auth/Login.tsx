@@ -10,11 +10,12 @@ export default function Login() {
 
   return (
     <>
-      <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">
+      <div className="mt-1 sm:mx-auto sm:w-full h-full sm:max-w-sm">
         <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Log in to your account
         </h2>
-        <form action={formAction} className="space-y-6">
+        <form action={formAction} className=" space-y-6">
+          
           <div>
             <label
               htmlFor="email"
