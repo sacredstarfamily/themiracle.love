@@ -25,18 +25,21 @@ model Profile {
 }
 
 model User {
-  id                String   @id @default(cuid())
-  name              String?  @db.VarChar(255)
-  email             String   @unique @db.VarChar(255)
-  hashedPassword    String   @db.VarChar(255)
-  verificationToken String   @default(uuid())
-  sessionToken      String?  @db.VarChar(255)
-  emailVerified     Boolean  @default(false)
-  walletAddress     String?
-  Post              Post[]
-  Profile           Profile?
-  Session           Session?
-  Order             Order[]
+  id                  String    @id @default(cuid())
+  name                String?   @db.VarChar(255)
+  email               String    @unique @db.VarChar(255)
+  hashedPassword      String    @db.VarChar(255)
+  verificationToken   String    @default(uuid())
+  sessionToken        String?   @db.VarChar(255)
+  emailVerified       Boolean   @default(false)
+  walletAddress       String?
+  Post                Post[]
+  Profile             Profile?
+  Session             Session?
+  Order               Order[]
+  passwordResetLink   String?   @default(uuid())
+  passwordResetToken  Int?
+  passwordResetExpiry DateTime?
 
   @@unique([id, sessionToken])
 }

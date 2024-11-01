@@ -4,5 +4,16 @@
     "javascript.inlayHints.functionLikeReturnTypes.enabled": true,
     "javascript.inlayHints.propertyDeclarationTypes.enabled": true,
     "javascript.inlayHints.variableTypes.enabled": true,
-    "typescript.inlayHints.functionLikeReturnTypes.enabled": true
+    "typescript.inlayHints.functionLikeReturnTypes.enabled": true,
+    
+    "prettier.requireConfig": true,
+    "[javascript]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    },
+    "[typescript]": {
+        "editor.defaultFormatter": "vscode.typescript-language-features"
+    },
+    "[typescriptreact]": {
+        "editor.defaultFormatter": "esbenp.prettier-vscode"
+    }
 }

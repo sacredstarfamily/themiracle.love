@@ -6,6 +6,8 @@ import { z } from "zod";
 import { Prisma } from "@prisma/client";
 import { encrypt } from '../lib/sessions';
 import { cookies } from "next/headers";
+import { randomUUID } from "crypto";
+
 type LoginData = {
   data: string | null;
 };
@@ -45,8 +47,8 @@ export async function createUser(
     }
   }
   try {
-   
-   const user = await prisma.user.create({
+
+    const user = await prisma.user.create({
       data: {
         name,
         email,
@@ -54,26 +56,26 @@ export async function createUser(
         sessionToken: session
       },
     });
-   const dbSession = await prisma.session.create({
+    const dbSession = await prisma.session.create({
       data: {
         userId: user.id,
         ExpiresAt: expiresAt,
         sessionId: session,
       }
     }
-  );
-  console.log('dbSession', dbSession)
+    );
+    console.log('dbSession', dbSession)
     const check = await fetch("https://themiracle.love/completeSignup.php", {
       method: "POST",
       body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
     });
     const data = await check.json();
-   
+
     console.log(data);
     console.log(check.status);
     if (check.status === 200) {
-    
-      return { ...prevState, data: data.message  };
+
+      return { ...prevState, data: data.message };
     }
   } catch (error) {
     if (
@@ -84,6 +86,7 @@ export async function createUser(
     }
   }
 }
+
 
 export async function loginUser(
   prevState: LoginData | undefined,
@@ -118,14 +121,14 @@ export async function loginUser(
     return user; */
   console.log(email, password);
 }
-export async function verifyEmail(token: string){
+export async function verifyEmail(token: string) {
   const user = await prisma.user.findFirst({
     where: {
       verificationToken: token,
     },
   });
-  if(!user){
-    return {data: "Invalid token"};
+  if (!user) {
+    return { data: "Invalid token" };
   }
   const updatedUser = await prisma.user.update({
     where: {
@@ -135,11 +138,90 @@ export async function verifyEmail(token: string){
       emailVerified: true,
     },
   });
-  if(updatedUser.emailVerified){
-    return {data: "Email verified"};
+  if (updatedUser.emailVerified) {
+    return { data: "Email verified" };
   }
 }
+export async function checkLink(link: string) {
+  console.log('checking link', link);
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetLink: link,
+    },
+  });
+  if (!user) {
+    return false;
+  }
+  return true;
+}
 
+
+export async function requestPasswordUpdate(
+  prevState: LoginData | undefined,
+  formData: FormData,
+) {
+  const email = formData.get("email") as string;
+  const user = await prisma.user.findFirst({
+    where: {
+      email,
+    },
+  });
+  if (!user) {
+    return { ...prevState, data: "Invalid email" };
+  }
+  const token = Math.floor(100000 + Math.random() * 900000);
+  const resetExpiration = new Date(Date.now() + (7 * 60 * 60 * 1000));
+  const resetLink = randomUUID();
+  const link = await prisma.user.updateMany({
+    where: {
+      email,
+    },
+    data: {
+      passwordResetLink: resetLink,
+      passwordResetToken: token,
+      passwordResetExpiry: resetExpiration
+    },
+  });
+  if (!link) {
+
+  }
+  await fetch("https://themiracle.love/resetPassword.php", {
+    method: "POST",
+    body: JSON.stringify({ email: email, link: resetLink, token: token }),
+  });
+  return { ...prevState, data: "Password reset link sent" };
+}
+export async function updateUserPassword(
+  prevState: LoginData | undefined,
+  formData: FormData) {
+  const link = formData.get("link") as string;
+  const resetToken = Number(formData.get("resettoken"));
+  const password = formData.get("password") as string;
+  const hashedPassword = await bcrypt.hash(password, 10);
+  const user = await prisma.user.findFirst({
+    where: {
+      passwordResetLink: link
+    }
+  });
+  if (resetToken !== user?.passwordResetToken) {
+    return { ...prevState, data: "Invalid token" };
+  }
+  const updateduser = await prisma.user.updateMany({
+    where: {
+      passwordResetLink: link,
+    },
+    data: {
+      hashedPassword: hashedPassword,
+      passwordResetLink: null,
+      passwordResetToken: null,
+      passwordResetExpiry: null,
+    },
+  });
+  if (updateduser) {
+    return { ...prevState, data: "Password updated" };
+  }
+
+}
 export async function deleteUserData(
   prevState: LoginData | undefined,
   formData: FormData,
