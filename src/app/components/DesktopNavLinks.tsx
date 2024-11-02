@@ -6,7 +6,7 @@ function DesktopNavLinks() {
         <Link href="/">Home</Link>
       </li>
       <li className="text-lg hover:text-blue-900 hover:font-semibold">
-        <Link href="/learn">Learn</Link>
+        <Link href="/shop">Shop</Link>
       </li>
       <li className="text-lg hover:text-blue-900 hover:font-semibold">
         <Link href="/auth">SignUp/Login</Link>

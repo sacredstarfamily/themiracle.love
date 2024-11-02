@@ -222,6 +222,7 @@ export async function updateUserPassword(
   }
 
 }
+
 export async function deleteUserData(
   prevState: LoginData | undefined,
   formData: FormData,
