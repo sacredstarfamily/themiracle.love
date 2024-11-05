@@ -5,6 +5,13 @@ import Footer from "./components/Footer";
 
 export default function Home() {
   const { isConnected } = useAccount();
+  const accountStyle = {
+    color: "black",
+    backgroundColor: "white",
+    border: "1px solid black",
+    borderRadius: "5px",
+    padding: "5px",
+  };
   return (
     <>
       <Navbar />
@@ -13,7 +20,8 @@ export default function Home() {
           <h1 className="text-4xl sm:text-6xl font-[family-name:var(--font-cheri)]">
             Connect To Your Wallet
           </h1>
-          <w3m-button />
+          <w3m-button styles={accountStyle}/>
+         
           <ol className="list-inside list-decimal text-sm text-center sm:text-left font-[family-name:var(--font-cheri)]">
             <li>Help the world by creating art and supporting artists</li>
           </ol>

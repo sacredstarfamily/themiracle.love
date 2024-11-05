@@ -13,7 +13,13 @@
     --foreground: #712e2e;
   }
 }
-
+w3m-account-button {
+  color: white;
+}
+wui-account-button>button {
+  color: white;
+  background-color: #320b0b;
+}
 body {
   color: var(--foreground);
   background: linear-gradient(#fcb6d9, #bc0061);
