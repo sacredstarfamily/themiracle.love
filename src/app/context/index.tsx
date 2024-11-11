@@ -35,12 +35,8 @@ export const modal = createAppKit({
   themeMode: "light",
   themeVariables: {
     "--w3m-color-mix": "#000000",
-    "--w3m-color-mix-strength": 40,
+    "--w3m-color-mix-strength": 30,
     "--w3m-accent": "#000000",
-    "--w3m-account-accent": "#000000",
-    "--w3m-background-color": "#000000",
-    "--wui-account-button-background": "#000000",
-    "--wui-background-color": "#000000",
   },
 });
 

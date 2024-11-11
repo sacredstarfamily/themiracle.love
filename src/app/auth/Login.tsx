@@ -1,19 +1,41 @@
 'use client';
 
 import { loginUser, requestPasswordUpdate } from "@/actions/actions";
-import { useFormState } from "react-dom";
-import { useState } from "react";
+import { useFormState, useFormStatus } from "react-dom";
+import { useEffect, useState } from "react";
+import { redirect } from "next/navigation";
 
 const INITIAL_STATE = {
   data: "",
 };
-
+function LoginButton() {
+  const{pending} = useFormStatus();
+ 
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+    >
+      {pending ? <p>Signing in</p> : <p>Sign in</p>}
+    </button>
+  );
+}
 export default function Login() {
+
   const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
   const [requestFormState, requestFormAction] = useFormState(requestPasswordUpdate, INITIAL_STATE);
 
   const [requestPassword, setRequestPassword] = useState(false);
-
+  useEffect(() => {
+    if (formState?.data) {
+      if(formState?.data === "a"){
+       alert("Login Successful");
+       redirect("/dashboard");
+      }
+      console.log(formState.data);
+    }
+  });
 
   return (
     <>
@@ -112,17 +134,12 @@ export default function Login() {
               </div>
 
               <div>
-                <button
-                  type="submit"
-                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Sign in
-                </button>
+                <LoginButton/>
+                
               </div>
             </form>
           </>
         )}
-
         <p>{requestFormState?.data}</p>
         <p>{formState?.data}</p>
       </div>

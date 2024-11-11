@@ -1,16 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use server";
 import bcrypt from "bcrypt";
 import prisma from "../lib/pc";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { encrypt } from '../lib/sessions';
+import { createSession, encrypt } from '../lib/sessions';
 import { cookies } from "next/headers";
 import { randomUUID } from "crypto";
+import { logoutUser } from "../lib/sessions";
+
 
 type LoginData = {
   data: string | null;
 };
+const isDev = process.env.NODE_ENV === "development";
 const signUpSchema = z.object({
   name: z.string().min(3).max(255),
   email: z.string().email(),
@@ -107,7 +109,10 @@ export async function loginUser(
     return { ...prevState, data: "Invalid email or password" };
   }
   if (pasCheck) {
-    return { ...prevState, data: user!.name };
+    await createSession(email);
+
+    return { ...prevState, data: 'a' };
+
   }
   /* 
    const user = await prisma.user.findFirst({
@@ -185,10 +190,15 @@ export async function requestPasswordUpdate(
   if (!link) {
 
   }
+
   await fetch("https://themiracle.love/resetPassword.php", {
     method: "POST",
     body: JSON.stringify({ email: email, link: resetLink, token: token }),
   });
+  if (isDev) {
+    console.log('resetLink', resetLink);
+    console.log('token', token);
+  }
   return { ...prevState, data: "Password reset link sent" };
 }
 export async function updateUserPassword(
@@ -220,8 +230,8 @@ export async function updateUserPassword(
   if (updateduser) {
     return { ...prevState, data: "Password updated" };
   }
-
 }
+
 
 export async function deleteUserData(
   prevState: LoginData | undefined,
@@ -236,4 +246,7 @@ export async function deleteUserData(
     console.log(user);
     return { ...prevState, data: "User deleted" };
   }
+}
+export async function logoutUserAction() {
+  await logoutUser();
 }
