@@ -9,6 +9,7 @@ import { randomUUID } from "crypto";
 import { logoutUser } from "../lib/sessions";
 
 
+
 type LoginData = {
   data: string | null;
 };
@@ -249,4 +250,5 @@ export async function deleteUserData(
 }
 export async function logoutUserAction() {
   await logoutUser();
+
 }

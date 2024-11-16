@@ -9,7 +9,7 @@ function DesktopNavLinks() {
         <Link href="/shop">Shop</Link>
       </li>
       <li className="text-lg hover:text-blue-900 hover:font-semibold font-[family-name:var(--font-cheri)]">
-        <Link href="/auth">SignUp/Login</Link>
+        <Link href="/auth">SignUp@Login</Link>
       </li>
     </ul>
   );
