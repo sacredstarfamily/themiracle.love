@@ -52,7 +52,7 @@ export default function ShopPage() {
         }
         return (
             <>
-                <h2>{isPending ? "Loading PayPal..." : "Pay with PayPal"}</h2>
+                <h2>{isPending ? "Loading PayPal..."+ clientId : "Pay with PayPal"}</h2>
                 <PayPalButtons {...buttonStyles} />
             </>
         );
