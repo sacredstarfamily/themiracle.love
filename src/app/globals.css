@@ -34,3 +34,19 @@ footer {
     text-wrap: balance;
   }
 }
+.single-product div.paypal-buttons {
+  z-index: -999 !important;
+}
+#buttons-container {
+  width: 50%;
+  z-index: -999 !important;
+}
+#button-block{
+  justify-self: center;
+  width: 50%;
+  z-index: 0 !important;
+}
+iframe {
+  z-index: 0 !important;
+ 
+}
