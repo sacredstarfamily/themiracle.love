@@ -18,12 +18,12 @@ export default async function middleware(req: NextRequest) {
     const cookie = cookies().get('session')?.value
     const session = await decrypt(cookie)
     if (isAdminRoute && session?.email !== 'seeloveinfinite@gmail.com') {
-        return NextResponse.redirect(new URL('/dashboard', req.nextUrl))
+        return NextResponse.redirect(new URL('/dashboard', req.nextUrl.toString()))
     }
     // 4. Redirect to /login if the user is not authenticated
     if (isProtectedRoute && !session?.email) {
 
-        return NextResponse.redirect(new URL('/auth', req.nextUrl))
+        return NextResponse.redirect(new URL('/auth', req.nextUrl.toString()))
     }
 
     // 5. Redirect to /dashboard if the user is authenticated
@@ -32,7 +32,7 @@ export default async function middleware(req: NextRequest) {
         session?.e &&
         !req.nextUrl.pathname.startsWith('/dashboard')
     ) {
-        return NextResponse.redirect(new URL('/dashboard', req.nextUrl))
+        return NextResponse.redirect(new URL('/dashboard', req.nextUrl.toString()))
     }
 
     return NextResponse.next()

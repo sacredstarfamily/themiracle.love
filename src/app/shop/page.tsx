@@ -3,7 +3,7 @@
 import {
     PayPalScriptProvider,
     PayPalButtons,
-    usePayPalScriptReducer
+
 } from "@paypal/react-paypal-js";
 import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
 import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
@@ -18,14 +18,14 @@ export default function ShopPage() {
 
     }
     function PayButton() {
-        const [{ isPending }] = usePayPalScriptReducer();
+
         const buttonStyles: PayPalButtonsComponentOptions = {
             style: {
                 color: "gold",
-                shape: "rect",
+                shape: "pill",
                 label: "donate",
                 height: 40,
-                
+
             },
             createOrder: (data, actions) => {
                 console.log(data)
@@ -55,23 +55,23 @@ export default function ShopPage() {
         }
         return (
             <div className="z-0" id="button-block">
-                <h2>{isPending ? "Loading PayPal..."+ clientId : "Pay with PayPal"}</h2>
+                <h2>Donate to themmiracle</h2>
                 <PayPalButtons {...buttonStyles} />
             </div>
         );
     }
     return (
         <>
-        <Navbar/>
-        <div className="h-screen flex-1 justify-center text-center z-1">
-            <PayPalScriptProvider
-                options={initialOptions}
-            >
-                <PayButton />
-               
-            </PayPalScriptProvider>
+            <Navbar />
+            <div className="h-screen flex-1 justify-center text-center z-1">
+                <PayPalScriptProvider
+                    options={initialOptions}
+                >
+                    <PayButton />
+
+                </PayPalScriptProvider>
             </div>
-            <Footer/>
+            <Footer />
         </>
     )
 }

@@ -64,10 +64,10 @@ model Order {
 }
 
 model Item {
-  id       String @id @default(cuid())
+  id       String  @id @default(cuid())
   name     String
   price    Float
   quantity Int
-  orderId  String
-  Order    Order  @relation(fields: [orderId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  Order    Order?  @relation(fields: [orderId], references: [id])
+  orderId  String?
 }

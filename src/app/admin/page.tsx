@@ -1,42 +1,37 @@
 'use client';
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Footer from "../components/Footer"
 import Navbar from "../components/Navbar"
-import { getAllUsers, deleteUser } from "@/actions/adminActions"
-import {User} from '@/lib/definitions';
 
+
+import AdminNavbar from "./try/components/AdminNavbar";
+import UsersComponent from "./components/UsersComponent";
+import ProductsComponent from "./components/ProductsComponent";
 export default function AdminPage() {
-    const [users, setUsers] = useState<User[] | null>();
-  
-   const deletePerson = async (email: string) => {
-         await deleteUser(email);
-            location.reload();
+
+    const [viewState, setViewState] = useState('dashboard');
+
+    const viewToggle = (view: string) => {
+        setViewState(view)
     }
-    useEffect(() => {
-       const fetchUsers = async () => {
-            const users = await getAllUsers();
-            setUsers(users);
-        }
-        fetchUsers();
-    }, []);
+
     return (
-        <div>
+        <>
             <Navbar />
-            <h1>Admin Page</h1>
-            <div className="flex h-screen flex-3 flex-col justify-center px-6 py-12 lg:px-8">
-                <h2 className="text-center">Members</h2>
-                <ul>
-                    {users?.map((user) => (
-                        <li key={user.id}>
-                            <p>{user.name}</p>
-                            <p>{user.email}</p>
-                            <button onClick={()=>{deletePerson(user.email)}}>Remove</button>
-                        </li>
-                    ))}
-                </ul>
-                <h2>Admins</h2>
-                </div>
+            <AdminNavbar toggleView={viewToggle} />
+
+            <div className="mt-12 h-screen overflow-scroll p-1 mx-1 border-2 border-indigo-500 rounded">
+
+                {viewState === "dashboard" && <h1>Dashboard</h1>}
+
+
+                {viewState === "users" && <UsersComponent />}
+                {viewState === "products" && <ProductsComponent />}
+
+
+
+            </div>
             <Footer />
-        </div>
+        </>
     )
 }

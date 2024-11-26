@@ -252,3 +252,8 @@ export async function logoutUserAction() {
   await logoutUser();
 
 }
+
+//Items functions
+export async function getAllItems() {
+  return prisma.item.findMany();
+}

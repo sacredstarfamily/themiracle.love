@@ -1,0 +1,8 @@
+.main {
+    height: 100%;
+    color: blue;
+    background: linear-gradient(#fcb6d9, #bc0061);
+    width: 50%;
+    left: 0;
+    padding: 10px;
+}

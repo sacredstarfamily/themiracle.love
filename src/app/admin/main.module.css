@@ -1,0 +1,5 @@
+.main {
+    height: 1000px;
+    transition: margin-left .5s;
+  padding: 20px;
+}
