@@ -47,7 +47,7 @@ model User {
 model Session {
   sessionId String   @unique
   userId    String   @unique
-  User      User     @relation(fields: [userId, sessionId], references: [id, sessionToken], onDelete: Cascade, onUpdate: NoAction)
+  User      User     @relation(fields: [userId, sessionId], references: [id, sessionToken], onDelete: Cascade, onUpdate: Cascade)
   ExpiresAt DateTime
 
   @@unique([userId, sessionId])

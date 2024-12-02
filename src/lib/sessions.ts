@@ -53,6 +53,15 @@ export async function createSession(email: string) {
   });
 
   if (user) {
+    console.log(user)
+    await prisma.user.update({
+      where: {
+        email: email
+      },
+      data: {
+        sessionToken: session
+      }
+    })
     console.log(session)
   }
   return session

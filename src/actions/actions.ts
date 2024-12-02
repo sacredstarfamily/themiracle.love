@@ -9,7 +9,6 @@ import { randomUUID } from "crypto";
 import { logoutUser } from "../lib/sessions";
 
 
-
 type LoginData = {
   data: string | null;
 };
@@ -191,11 +190,13 @@ export async function requestPasswordUpdate(
   if (!link) {
 
   }
+  if (!isDev) {
+    await fetch("https://themiracle.love/resetPassword.php", {
+      method: "POST",
+      body: JSON.stringify({ email: email, link: resetLink, token: token }),
+    });
+  }
 
-  await fetch("https://themiracle.love/resetPassword.php", {
-    method: "POST",
-    body: JSON.stringify({ email: email, link: resetLink, token: token }),
-  });
   if (isDev) {
     console.log('resetLink', resetLink);
     console.log('token', token);
