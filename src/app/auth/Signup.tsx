@@ -1,6 +1,7 @@
 import { createUser } from "@/actions/actions";
 import { useFormState, useFormStatus } from "react-dom";
-
+import { useEffect } from "react";
+import { redirect } from "next/navigation";
 const SIGNUP_INITIAL_STATE = {
   data: "Sign Up",
 };
@@ -22,6 +23,15 @@ export default function Signup() {
     createUser,
     SIGNUP_INITIAL_STATE,
   );
+  useEffect(() => {
+    if (signupState?.data) {
+      if (signupState?.data === "User created") {
+        alert("Sign Up Successful");
+        redirect("/dashboard")
+      }
+      console.log(signupState.data);
+    }
+  }, [signupState]);
   return (
     <>
       <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">

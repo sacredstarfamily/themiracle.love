@@ -27,7 +27,7 @@ export async function decrypt(session: string | undefined = '') {
     })
     return payload
   } catch (error) {
-    console.log('error', error);
+    return null
   }
 }
 
@@ -53,7 +53,7 @@ export async function createSession(email: string) {
   });
 
   if (user) {
-    console.log(user)
+
     await prisma.user.update({
       where: {
         email: email
@@ -62,7 +62,7 @@ export async function createSession(email: string) {
         sessionToken: session
       }
     })
-    console.log(session)
+
   }
   return session
 }

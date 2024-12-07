@@ -67,18 +67,21 @@ export async function createUser(
     }
     );
     console.log('dbSession', dbSession)
-    const check = await fetch("https://themiracle.love/completeSignup.php", {
-      method: "POST",
-      body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
-    });
-    const data = await check.json();
+    if (!isDev) {
+      const check = await fetch("https://themiracle.love/completeSignup.php", {
+        method: "POST",
+        body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
+      });
+      const data = await check.json();
 
-    console.log(data);
-    console.log(check.status);
-    if (check.status === 200) {
+      console.log(data);
+      console.log(check.status);
+      if (check.status === 200) {
 
-      return { ...prevState, data: data.message };
+        return { ...prevState, data: data.message };
+      }
     }
+    return { ...prevState, data: "User created" };
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&

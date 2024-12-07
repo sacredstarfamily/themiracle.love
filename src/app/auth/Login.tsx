@@ -4,13 +4,14 @@ import { loginUser, requestPasswordUpdate } from "@/actions/actions";
 import { useFormState, useFormStatus } from "react-dom";
 import { useEffect, useState } from "react";
 import { redirect } from "next/navigation";
+import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
   data: "",
 };
 function LoginButton() {
-  const{pending} = useFormStatus();
- 
+  const { pending } = useFormStatus();
+
   return (
     <button
       type="submit"
@@ -22,16 +23,18 @@ function LoginButton() {
   );
 }
 export default function Login() {
-
+  const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
+  const login = useAuthStore((state) => state.login);
   const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
   const [requestFormState, requestFormAction] = useFormState(requestPasswordUpdate, INITIAL_STATE);
 
   const [requestPassword, setRequestPassword] = useState(false);
   useEffect(() => {
     if (formState?.data) {
-      if(formState?.data === "a"){
-       alert("Login Successful");
-       redirect("/dashboard");
+      if (formState?.data === "a") {
+        login();
+        alert("Login Successful");
+        redirect("/dashboard");
       }
       console.log(formState.data);
     }
@@ -48,6 +51,7 @@ export default function Login() {
             <form action={requestFormAction} className=" space-y-6">
 
               <div>
+                <p>{isLoggedIn && "hello"}</p>
                 <label
                   htmlFor="email"
                   className="block text-sm font-medium leading-6 text-gray-900"
@@ -66,12 +70,12 @@ export default function Login() {
                 </div>
               </div>
 
-             
+
 
               <div>
                 <button
                   type="submit"
-                  
+
                   className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   Reqest Password Reset
@@ -134,8 +138,8 @@ export default function Login() {
               </div>
 
               <div>
-                <LoginButton/>
-                
+                <LoginButton />
+
               </div>
             </form>
           </>
