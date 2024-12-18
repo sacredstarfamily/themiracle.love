@@ -55,7 +55,7 @@ export default function ShopPage() {
         }
         return (
             <div className="z-0" id="button-block">
-                <h2>Donate to themmiracle</h2>
+                <h2>Donate 1$ to themiracle.love</h2>
                 <PayPalButtons {...buttonStyles} />
             </div>
         );

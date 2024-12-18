@@ -6,6 +6,8 @@ import useAuthStore from "@/context/auth-context";
 import { logoutUserAction } from "@/actions/actions";
 import DashNav from "./components/DashNav";
 import { useState } from "react";
+import Profile from './components/Profile';
+import Settings from './components/Settings';
 
 function LogoutButton() {
   const { logout } = useAuthStore();
@@ -23,7 +25,7 @@ function LogoutButton() {
   };
 
   return (
-    <button onClick={handleLogout} className="flex w-1/2 justify-center rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-red-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
+    <button onClick={handleLogout} className="flex w-1/2 justify-center border-2 self-center border-teal-100 rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-red-500 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600">
       Logout
     </button>
   );
@@ -39,10 +41,9 @@ export default function DashboardPage() {
     <div>
       <Navbar />
       <DashNav toggleView={viewToggle} />
-      <div className="flex h-screen flex-1 flex-col justify-center self-center px-5 mt-0 lg:px-5">
-
-        {viewState === "profile" && <h1>Profile</h1>}
-        {viewState === "settings" && <h1>Settings</h1>}
+      <div className="flex h-screen flex-col justify-center px-5 mt-0 lg:px-5">
+        {viewState === "profile" && <Profile />}
+        {viewState === "settings" && <Settings />}
         <LogoutButton />
       </div>
 
