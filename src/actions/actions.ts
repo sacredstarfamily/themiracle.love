@@ -58,7 +58,7 @@ export async function createUser(
         sessionToken: session
       },
     });
-    const dbSession = await prisma.session.create({
+    await prisma.session.create({
       data: {
         userId: user.id,
         ExpiresAt: expiresAt,
@@ -66,7 +66,7 @@ export async function createUser(
       }
     }
     );
-    console.log('dbSession', dbSession)
+
     if (!isDev) {
       const check = await fetch("https://themiracle.love/completeSignup.php", {
         method: "POST",
@@ -74,8 +74,7 @@ export async function createUser(
       });
       const data = await check.json();
 
-      console.log(data);
-      console.log(check.status);
+
       if (check.status === 200) {
 
         return { ...prevState, data: data.message };
@@ -117,17 +116,7 @@ export async function loginUser(
     return { ...prevState, data: 'a' };
 
   }
-  /* 
-   const user = await prisma.user.findFirst({
-        where: {
-            email
-        }
-    });
-    const pasCheck = await bcrypt.compare(password, user!.hashedPassword);
-    if(!pasCheck) 
-        {throw new Error('Invalid email or password');}
-    return user; */
-  console.log(email, password);
+
 }
 export async function verifyEmail(token: string) {
   const user = await prisma.user.findFirst({
@@ -204,6 +193,7 @@ export async function requestPasswordUpdate(
     console.log('resetLink', resetLink);
     console.log('token', token);
   }
+
   return { ...prevState, data: "Password reset link sent" };
 }
 export async function updateUserPassword(
@@ -248,7 +238,7 @@ export async function deleteUserData(
     },
   });
   if (user) {
-    console.log(user);
+
     return { ...prevState, data: "User deleted" };
   }
 }
