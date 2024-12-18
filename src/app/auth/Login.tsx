@@ -30,13 +30,9 @@ export default function Login() {
 
   const [requestPassword, setRequestPassword] = useState(false);
   useEffect(() => {
-    if (formState?.data) {
-      if (formState?.data === "a") {
-        login();
-        alert("Login Successful");
-        redirect("/dashboard");
-      }
-      console.log(formState.data);
+    if (formState?.data && formState?.data === "a") {
+      login();
+      redirect("/dashboard");
     }
   });
 
