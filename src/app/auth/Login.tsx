@@ -31,7 +31,12 @@ export default function Login() {
   const [requestPassword, setRequestPassword] = useState(false);
   useEffect(() => {
     if (formState?.data && formState?.data === "a") {
-      login();
+      login({
+        id: "",
+        name: null,
+        email: "",
+        sessionToken: null
+      })
       redirect("/dashboard");
     }
   });

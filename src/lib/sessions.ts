@@ -68,7 +68,7 @@ export async function createSession(email: string) {
 }
 
 export async function logoutUser() {
-  console.log('logout');
+
   cookies().set(
     'session',
     '',

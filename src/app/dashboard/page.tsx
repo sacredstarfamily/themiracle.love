@@ -31,6 +31,7 @@ function LogoutButton() {
   );
 }
 export default function DashboardPage() {
+  const { user } = useAuthStore();
   const [viewState, setViewState] = useState('profile');
   const viewToggle = (view: string) => {
     setViewState(view)
@@ -42,7 +43,8 @@ export default function DashboardPage() {
       <Navbar />
       <DashNav toggleView={viewToggle} />
       <div className="flex h-screen flex-col justify-center px-5 mt-0 lg:px-5">
-        {viewState === "profile" && <Profile />}
+
+        {viewState === "profile" && <Profile {...user!} />}
         {viewState === "settings" && <Settings />}
         <LogoutButton />
       </div>
