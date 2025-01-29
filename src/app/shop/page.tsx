@@ -15,10 +15,8 @@ export default function ShopPage() {
     const initialOptions: PayPalScriptOptions = {
         clientId: clientId,
         currency: 'USD',
-
     }
     function PayButton() {
-
         const buttonStyles: PayPalButtonsComponentOptions = {
             style: {
                 color: "gold",
@@ -64,6 +62,10 @@ export default function ShopPage() {
         <>
             <Navbar />
             <div className="h-screen flex-1 justify-center text-center z-1">
+                <div className="border-2 border-black p-0 w-1/2 m-auto rounded-lg">
+                    <h1 className="text-4xl">themiracle token</h1>
+                    <p>available at <a href="https://pump.fun/coin/DakAndRzPaLjUSZYSapvZFKWuGoZXu84UUopWFfypump"><span className="font-[family-name:var(--font-cheri)] text-blue-500 underline cursor-pointer">pump.fun</span></a></p>
+                </div>
                 <PayPalScriptProvider
                     options={initialOptions}
                 >
