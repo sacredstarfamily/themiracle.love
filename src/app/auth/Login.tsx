@@ -46,6 +46,7 @@ export default function Login() {
   return (
     <>
       <div className="mt-1 sm:mx-auto sm:w-full h-full sm:max-w-sm">
+        {requestFormState.data ? <p></p> : <p></p>}
         {requestPassword ? (
           <>
             <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
