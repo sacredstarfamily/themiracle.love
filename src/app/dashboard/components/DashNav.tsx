@@ -18,7 +18,7 @@ export default function DashNav({ toggleView }: NavbarProps) {
             <div className="hidden relative py-0 sm:flex flex-col justify-center">
                 <DeskDashNav toggleView={(i) => handleViewChange(i)} />
             </div>
-            <div className="sm:hidden relative flex flex-row my-0">
+            <div className="sm:hidden relative flex flex-row mt-0 mb-2">
                 <MobileDashNavBtn onClick={handleDrawerToggle} />
 
                 <MobileDashNav toggleView={(i) => handleViewChange(i)} isOpen={isDrawerOpen} onClose={handleDrawerToggle} />

@@ -16,7 +16,10 @@ export default function Home() {
             Create art, mint NFTs, discover artists, learn about blockchain, and more!
           </p>
 
-
+          <div className="border-2 border-black p-0 w-1/2 m-auto rounded-lg">
+            <h1 className="text-4xl">themiracle token</h1>
+            <p>available at <a href="https://pump.fun/coin/DakAndRzPaLjUSZYSapvZFKWuGoZXu84UUopWFfypump"><span className="font-[family-name:var(--font-cheri)] text-blue-500 underline cursor-pointer">pump.fun</span></a></p>
+          </div>
 
           <div className="flex gap-4 items-center flex-col sm:flex-row"></div>
 

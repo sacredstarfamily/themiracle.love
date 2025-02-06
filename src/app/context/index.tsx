@@ -21,6 +21,8 @@ if (!projectId) {
 export const metadata = {
   name: "themiracle",
   description: "themiracle community",
+  url: "https://themiracle.love",
+  icons: ['https://themiracle.love/favicon.ico']
 };
 export const modal = createAppKit({
   adapters: [wagmiAdapter, solanaWeb3JsAdapter],

@@ -25,6 +25,7 @@ export async function decrypt(session: string | undefined = '') {
     const { payload } = await jwtVerify(session, encodedKey, {
       algorithms: ['HS256'],
     })
+
     return payload
   } catch (error) {
     return null
@@ -34,7 +35,6 @@ export async function decrypt(session: string | undefined = '') {
 export async function createSession(email: string) {
   const expiresAt: Date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   const session = await encrypt({ email, expiresAt })
-
   cookies().set(
     'session',
     session,
@@ -51,20 +51,24 @@ export async function createSession(email: string) {
       email: email
     }
   });
+  const sesh = session.slice(0, 60);
 
   if (user) {
 
-    await prisma.user.update({
-      where: {
-        email: email
-      },
-      data: {
-        sessionToken: session
-      }
-    })
-
+    try {
+      await prisma.user.update({
+        where: {
+          email: email
+        },
+        data: {
+          sessionToken: sesh
+        }
+      })
+    } catch (error) {
+      console.error('Failed to update user session token:', error)
+    }
   }
-  return session
+  return sesh
 }
 
 export async function logoutUser() {

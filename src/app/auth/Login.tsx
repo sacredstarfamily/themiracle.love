@@ -1,10 +1,12 @@
 'use client';
 
-import { loginUser, requestPasswordUpdate } from "@/actions/actions";
-import { useFormState, useFormStatus } from "react-dom";
+import { getUser, loginUser, requestPasswordUpdate } from "@/actions/actions";
+
+import { useFormStatus, useFormState } from "react-dom";
 import { useEffect, useState } from "react";
 import { redirect } from "next/navigation";
 import useAuthStore from '../../context/auth-context';
+import { User } from "@/lib/definitions";
 
 const INITIAL_STATE = {
   data: "",
@@ -24,20 +26,20 @@ function LoginButton() {
 }
 export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
-  const login = useAuthStore((state) => state.login);
+
+  const { login } = useAuthStore();
   const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
   const [requestFormState, requestFormAction] = useFormState(requestPasswordUpdate, INITIAL_STATE);
-
   const [requestPassword, setRequestPassword] = useState(false);
   useEffect(() => {
-    if (formState?.data && formState?.data === "a") {
-      login({
-        id: "",
-        name: null,
-        email: "",
-        sessionToken: null
-      })
-      redirect("/dashboard");
+    const getandset = async (token: string) => {
+      const user = await getUser(token);
+      login(user as User);
+      console.log(user);
+    };
+    if (formState?.data && formState?.data !== "fail") {
+      getandset(formState?.data);
+      redirect("/dashboard?token=" + formState?.data);
     }
   });
 
@@ -145,8 +147,7 @@ export default function Login() {
             </form>
           </>
         )}
-        <p>{requestFormState?.data}</p>
-        <p>{formState?.data}</p>
+
       </div>
     </>
   );

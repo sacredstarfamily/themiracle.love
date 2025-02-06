@@ -105,20 +105,37 @@ export async function loginUser(
     },
   });
   if (!user) {
-    return { ...prevState, data: "Invalid email or password" };
+    return { ...prevState, data: "fail" };
   }
   const pasCheck = await bcrypt.compare(password, user!.hashedPassword);
   if (!pasCheck) {
-    return { ...prevState, data: "Invalid email or password" };
+    return { ...prevState, data: "fail" };
   }
   if (pasCheck) {
-    await createSession(email);
-
-    return { ...prevState, data: 'a' };
+    console.log(user)
+    const y = await createSession(email);
+    console.log(prevState)
+    return { ...prevState, data: y };
 
   }
 
 }
+export async function getUser(sessionToken: string) {
+  const user = await prisma.user.findFirst({
+    where: {
+      sessionToken,
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      sessionToken: true,
+    },
+  });
+  console.log("from getUser", user);
+  return user;
+}
+
 export async function verifyEmail(token: string) {
   const user = await prisma.user.findFirst({
     where: {

@@ -5,10 +5,12 @@ import Navbar from "../components/Navbar";
 import useAuthStore from "@/context/auth-context";
 import { logoutUserAction } from "@/actions/actions";
 import DashNav from "./components/DashNav";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Profile from './components/Profile';
 import Settings from './components/Settings';
-
+import { getUser } from "@/actions/actions";
+import { useSearchParams } from "next/navigation";
+import { User } from "@/lib/definitions";
 function LogoutButton() {
   const { logout } = useAuthStore();
   const router = useRouter();
@@ -31,22 +33,33 @@ function LogoutButton() {
   );
 }
 export default function DashboardPage() {
-  const { user } = useAuthStore();
+  const params = useSearchParams();
+  const token = params.get("token");
+  const { user, login } = useAuthStore();
   const [viewState, setViewState] = useState('profile');
   const viewToggle = (view: string) => {
     setViewState(view)
   }
-
+  useEffect(() => {
+    const p = async (token: string) => {
+      const user = await getUser(token);
+      login(user as User);
+    }
+    if (!user) {
+      p(token!)
+      console.log("from dashboard", user)
+    }
+  }, [login, token, user]);
 
   return (
     <div>
       <Navbar />
       <DashNav toggleView={viewToggle} />
       <div className="flex h-screen flex-col justify-center px-5 mt-0 lg:px-5">
-
         {viewState === "profile" && <Profile {...user!} />}
-        {viewState === "settings" && <Settings />}
+        {viewState === "settings" && <Settings {...user!} />}
         <LogoutButton />
+
       </div>
 
       <Footer />
