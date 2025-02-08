@@ -18,25 +18,9 @@ export default function ShopPage() {
         clientId: clientId,
         currency: 'USD',
     }
-    function PrintLoadingState() {
-        const [{ isInitial, isPending, isResolved, isRejected }] =
-            usePayPalScriptReducer();
-        let status = "no status";
 
-        if (isInitial) {
-            status = "initial";
-        } else if (isPending) {
-            status = "pending";
-        } else if (isResolved) {
-            status = "resolved";
-        } else if (isRejected) {
-            status = "rejected";
-        }
-
-        return <div>Current status: {status} </div>;
-    }
     function PayButton() {
-        const [{ isInitial, isPending, isResolved, isRejected }] =
+        const [{ isResolved }] =
             usePayPalScriptReducer();
         const buttonStyles: PayPalButtonsComponentOptions = {
             style: {
