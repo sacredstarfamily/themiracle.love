@@ -3,27 +3,47 @@
 import {
     PayPalScriptProvider,
     PayPalButtons,
-
+    usePayPalScriptReducer
 } from "@paypal/react-paypal-js";
 import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
 import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
+
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 
 export default function ShopPage() {
+
     const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID as string;
     const initialOptions: PayPalScriptOptions = {
         clientId: clientId,
         currency: 'USD',
     }
+    function PrintLoadingState() {
+        const [{ isInitial, isPending, isResolved, isRejected }] =
+            usePayPalScriptReducer();
+        let status = "no status";
+
+        if (isInitial) {
+            status = "initial";
+        } else if (isPending) {
+            status = "pending";
+        } else if (isResolved) {
+            status = "resolved";
+        } else if (isRejected) {
+            status = "rejected";
+        }
+
+        return <div>Current status: {status} </div>;
+    }
     function PayButton() {
+        const [{ isInitial, isPending, isResolved, isRejected }] =
+            usePayPalScriptReducer();
         const buttonStyles: PayPalButtonsComponentOptions = {
             style: {
                 color: "gold",
                 shape: "pill",
                 label: "donate",
                 height: 40,
-
             },
             createOrder: (data, actions) => {
                 console.log(data)
@@ -33,7 +53,7 @@ export default function ShopPage() {
                         {
                             amount: {
                                 currency_code: "USD",
-                                value: "1",
+                                value: "100",
                             },
                         },
                     ],
@@ -43,7 +63,7 @@ export default function ShopPage() {
                 return actions.order?.capture().then((details) => {
                     alert(
                         "Transaction completed by " +
-                        (details?.payer?.name?.given_name ?? "No details")
+                        (details?.payment_source?.paypal?.name?.given_name ?? "No details")
                     );
 
                     alert("Data details: " + JSON.stringify(data, null, 2));
@@ -53,8 +73,10 @@ export default function ShopPage() {
         }
         return (
             <div className="z-0" id="button-block">
-                <h2>Donate 1$ to themiracle.love</h2>
-                <PayPalButtons {...buttonStyles} />
+                {isResolved ?
+                    <> <h2>Donate 100$ to themiracle.love</h2>
+                        <PayPalButtons {...buttonStyles} /></> : <><p>loading...</p></>
+                }
             </div>
         );
     }
@@ -69,6 +91,7 @@ export default function ShopPage() {
                 <PayPalScriptProvider
                     options={initialOptions}
                 >
+
                     <PayButton />
 
                 </PayPalScriptProvider>

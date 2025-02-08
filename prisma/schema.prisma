@@ -33,6 +33,8 @@ model User {
   sessionToken        String?   @db.VarChar(255)
   emailVerified       Boolean   @default(false)
   walletAddress       String?
+  wallets             Json?
+  location            Json?
   Post                Post[]
   Profile             Profile?
   Session             Session?

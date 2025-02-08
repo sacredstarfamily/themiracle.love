@@ -10,6 +10,7 @@ import { logoutUser } from "../lib/sessions";
 
 
 
+
 type LoginData = {
   data: string | null;
 };
@@ -134,6 +135,26 @@ export async function getUser(sessionToken: string) {
   });
   console.log("from getUser", user);
   return user;
+}
+
+export async function addUserWallet(userId: string, publicKey: string, chain: string) {
+  const json = [
+    {
+      "publicKey": publicKey,
+      "chain": chain
+    }
+  ]
+  const updated = await prisma.user.update({
+    where: {
+      id: userId,
+    },
+    data: {
+      wallets: json
+    }
+  });
+  if (updated) {
+    return { data: "Wallet added" };
+  }
 }
 
 export async function verifyEmail(token: string) {
