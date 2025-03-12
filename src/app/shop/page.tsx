@@ -1,69 +1,31 @@
 'use client';
 
-import {
-    PayPalScriptProvider,
-    PayPalButtons,
-    usePayPalScriptReducer
-} from "@paypal/react-paypal-js";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
-import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
-
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
+import PaypalCard from "./shop-components/PaypalCard";
+import PayButton from "./shop-components/PayButton";
+import { PayPalInterface } from "@/actions/paypalActions";
+import { useEffect, useMemo } from "react";
 
 export default function ShopPage() {
 
-    const clientId = process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID as string;
+    const clientId = process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID as string;
     const initialOptions: PayPalScriptOptions = {
         clientId: clientId,
         currency: 'USD',
     }
+    const paypalMemo = useMemo(() => {
+        const paypal = new PayPalInterface();
+        const products = paypal.getItems();
+        console.log(products);
+        return products;
+    }, []);
 
-    function PayButton() {
-        const [{ isResolved }] =
-            usePayPalScriptReducer();
-        const buttonStyles: PayPalButtonsComponentOptions = {
-            style: {
-                color: "gold",
-                shape: "pill",
-                label: "donate",
-                height: 40,
-            },
-            createOrder: (data, actions) => {
-                console.log(data)
-                return actions.order.create({
-                    intent: "CAPTURE",
-                    purchase_units: [
-                        {
-                            amount: {
-                                currency_code: "USD",
-                                value: "100",
-                            },
-                        },
-                    ],
-                });
-            },
-            onApprove: async (data, actions) => {
-                return actions.order?.capture().then((details) => {
-                    alert(
-                        "Transaction completed by " +
-                        (details?.payment_source?.paypal?.name?.given_name ?? "No details")
-                    );
-
-                    alert("Data details: " + JSON.stringify(data, null, 2));
-                });
-            }
-
-        }
-        return (
-            <div className="z-0" id="button-block">
-                {isResolved ?
-                    <> <h2>Donate 100$ to themiracle.love</h2>
-                        <PayPalButtons {...buttonStyles} /></> : <><p>loading...</p></>
-                }
-            </div>
-        );
-    }
+    useEffect(() => {
+        paypalMemo;
+    }, [paypalMemo]);
     return (
         <>
             <Navbar />
@@ -72,14 +34,14 @@ export default function ShopPage() {
                     <h1 className="text-4xl">themiracle token</h1>
                     <p>available at <a href="https://pump.fun/coin/DakAndRzPaLjUSZYSapvZFKWuGoZXu84UUopWFfypump"><span className="font-[family-name:var(--font-cheri)] text-blue-500 underline cursor-pointer">pump.fun</span></a></p>
                 </div>
-                <PayPalScriptProvider
-                    options={initialOptions}
-                >
-
+                <PayPalScriptProvider options={initialOptions}>
                     <PayButton />
+                    <div className="border-2 border-black p-0 w-1/2 m-auto rounded-lg">
 
+                    </div>
+                    <PaypalCard />
                 </PayPalScriptProvider>
-            </div>
+            </div >
             <Footer />
         </>
     )

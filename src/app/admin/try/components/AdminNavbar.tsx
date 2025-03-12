@@ -18,7 +18,7 @@ export default function AdminNavbar({ toggleView }: AdminNavBarProps) {
     return (
         <>
             <div className="hidden relative py-0 sm:flex flex-col justify-center">
-                <AdminNavDesk />
+                <AdminNavDesk toggleView={(i) => handleViewChange(i)} />
             </div>
             <div className="sm:hidden relative flex flex-row my-0">
                 <AdminNavMobileBtn onClick={handleDrawerToggle} />

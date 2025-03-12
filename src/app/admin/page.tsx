@@ -21,15 +21,9 @@ export default function AdminPage() {
             <AdminNavbar toggleView={viewToggle} />
 
             <div className="mt-12 h-screen overflow-scroll p-1 mx-1 border-2 border-indigo-500 rounded">
-
                 {viewState === "dashboard" && <h1>Dashboard</h1>}
-
-
                 {viewState === "users" && <UsersComponent />}
                 {viewState === "products" && <ProductsComponent />}
-
-
-
             </div>
             <Footer />
         </>
