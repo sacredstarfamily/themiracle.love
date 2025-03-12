@@ -3,10 +3,10 @@ import qs from 'qs';
 
 
 const Env = process.env.NODE_ENV;
-const SANDBOX_URL = "https://api.sandbox.paypal.com";
+
 const LIVE_URL = "https://api.paypal.com";
 const LIVE_API_URL = "https://api-m.paypal.com";
-const API_URL = "https://api-m.sandbox.paypal.com";
+
 export class PayPalInterface {
     _token: { expires_in: number; created: number; access_token: string } | null = null;
     async getToken() {
