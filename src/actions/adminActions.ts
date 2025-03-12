@@ -19,7 +19,7 @@ export async function uploadImage(formData: FormData) {
     if (!file) {
         return;
     }
-    const filePath = path.join(process.cwd(), "src/public/uploads/" + filename);
+    const filePath = path.join(process.cwd(), "/public/uploads/" + filename);
     try {
         if (!fs.existsSync(filePath)) {
             writeFile(filePath, buffer, (err) => {
@@ -28,6 +28,7 @@ export async function uploadImage(formData: FormData) {
                     throw err;
                 }
             });
+            return { img_url: "/uploads/" + filename }
         }
     } catch (error) {
         console.error("Error writing file:", error);
@@ -39,28 +40,35 @@ export async function addItem(
     prevState: Formstate | undefined,
     formData: FormData,
 ) {
-    uploadImage(formData);
-
-
     const name = formData.get("item_name") as string;
     const paypal = new PayPalInterface();
     const price = Number(formData.get("item_price"));
     const quantity = Number(formData.get("item_quantity"));
 
-    console.log(name, price, quantity);
-    const addedItem = await prisma.item.create({
-        data: {
-            name,
-            price,
-            quantity
-        }
-    });
-    if (addedItem) {
-        paypal.createItem(name, "A new item", price, "https://via.placeholder.com/150");
-        return { ...prevState, data: 'a' };
+    if (formData.get("item_image")) {
+        const iurl = uploadImage(formData);
+        iurl.then(async (res) => {
+            console.log(res);
+            console.log(name, price, quantity);
+            const addedItem = await prisma.item.create({
+                data: {
+                    name,
+                    price,
+                    img_url: res!.img_url,
+                    quantity
+                }
+            });
+            if (addedItem) {
+                paypal.createItem(name, "A new item", price, "https://themiracle.love/uploads/" + res!.img_url);
+                return { ...prevState, data: 'a' };
 
+            }
+            return { ...prevState, data: 'b' };
+        });
+        return { ...prevState, data: 'c' };
     }
-    return { ...prevState, data: 'b' };
+
+
 }
 export async function getAllUsers() {
     try {
