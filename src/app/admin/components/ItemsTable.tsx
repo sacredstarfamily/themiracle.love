@@ -1,7 +1,7 @@
 import { getAllItems } from "@/actions/actions";
 import { useEffect, useState } from "react";
 import { deleteItem } from "@/actions/adminActions";
-import Image from "next/image";
+
 
 type Item = {
     id: string,
