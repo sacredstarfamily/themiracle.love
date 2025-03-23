@@ -16,6 +16,7 @@ export default function ItemsTable() {
     const [items, setItems] = useState<Item[]>();
     const fetchItems = async () => {
         const items = await getAllItems();
+
         setItems(items);
     }
     const removeItem = async (id: string) => {
@@ -26,7 +27,7 @@ export default function ItemsTable() {
         fetchItems();
     }, [])
     return (
-        <div className="flex flex-col flex-1 justify-center">
+        <div className="grid grid-cols-3 gap-3 justify-center">
 
             {items?.map((item) => (
                 <div className="flex flex-row flex-auto justify-center" key={item.id}>

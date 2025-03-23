@@ -18,9 +18,7 @@ export default function ShopPage() {
     }
     const paypalMemo = useMemo(() => {
         const paypal = new PayPalInterface();
-        const products = paypal.getItems();
-        console.log(products);
-        return products;
+        return paypal.getItems();
     }, []);
 
     useEffect(() => {

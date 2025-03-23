@@ -1,9 +1,11 @@
-import { createUser } from "@/actions/actions";
+import { createUser, getUser } from "@/actions/actions";
 import { useFormState, useFormStatus } from "react-dom";
 import { useEffect } from "react";
 import { redirect } from "next/navigation";
+import useAuthStore from "@/context/auth-context";
+import { User } from "@/lib/definitions";
 const SIGNUP_INITIAL_STATE = {
-  data: "Sign Up",
+  data: "",
 };
 const SignupButton = () => {
   const { pending } = useFormStatus();
@@ -19,19 +21,27 @@ const SignupButton = () => {
 };
 
 export default function Signup() {
+  const { login } = useAuthStore();
   const [signupState, signupAction] = useFormState(
     createUser,
     SIGNUP_INITIAL_STATE,
   );
   useEffect(() => {
-    if (signupState?.data) {
-      if (signupState?.data === "User created") {
-        alert("Sign Up Successful");
-        redirect("/dashboard")
-      }
-      console.log(signupState.data);
+    const getandset = async (token: string) => {
+      console.log("from getandset")
+      const user = await getUser(token);
+      login(user as User);
+
+    };
+
+    if (signupState?.data && signupState?.data !== "fail") {
+      console.log(signupState.data)
+      alert("Sign Up Successful");
+      getandset(signupState.data)
+
+      redirect("/dashboard?token=" + signupState.data)
     }
-  }, [signupState]);
+  });
   return (
     <>
       <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">

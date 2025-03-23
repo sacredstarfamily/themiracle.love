@@ -7,7 +7,9 @@ export default function UsersComponent() {
 
     const deletePerson = async (email: string) => {
         await deleteUser(email);
-        location.reload();
+        const users = await getAllUsers();
+        setUsers(users)
+
     }
     useEffect(() => {
         const fetchUsers = async () => {
@@ -15,7 +17,7 @@ export default function UsersComponent() {
             setUsers(users);
         }
         fetchUsers();
-    }, []);
+    });
     return (
         <div className="mx-3 mt-5 border-2">
             <h1>Users</h1>

@@ -120,14 +120,7 @@ export default function Login() {
                   >
                     Password
                   </label>
-                  <div className="text-sm">
-                    <button
-                      onClick={() => setRequestPassword(true)}
-                      className="font-semibold text-indigo-600 hover:text-indigo-500"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
+
                 </div>
                 <div className="mt-2">
                   <input
@@ -143,7 +136,14 @@ export default function Login() {
 
               <div>
                 <LoginButton />
-
+                <div className="text-sm">
+                  <button
+                    onClick={() => setRequestPassword(true)}
+                    className="font-semibold text-indigo-600 hover:text-indigo-500"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
               </div>
             </form>
           </>

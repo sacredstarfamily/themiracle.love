@@ -46,26 +46,24 @@ export async function addItem(
     const quantity = Number(formData.get("item_quantity"));
 
     if (formData.get("item_image")) {
-        const iurl = uploadImage(formData);
-        iurl.then(async (res) => {
-            console.log(res);
-            console.log(name, price, quantity);
-            const addedItem = await prisma.item.create({
-                data: {
-                    name,
-                    price,
-                    img_url: res!.img_url,
-                    quantity
-                }
-            });
-            if (addedItem) {
-                paypal.createItem(name, "A new item", price, "https://themiracle.love/uploads/" + res!.img_url);
-                return { ...prevState, data: 'a' };
-
+        const iurl = await uploadImage(formData);
+        const addedItem = await prisma.item.create({
+            data: {
+                name,
+                price,
+                img_url: iurl!.img_url,
+                quantity
             }
-            return { ...prevState, data: 'b' };
         });
-        return { ...prevState, data: 'c' };
+        if (addedItem) {
+            paypal.createItem(name, "blah", price, "https://themiracle.love/uploads" + iurl!.img_url)
+            return { ...prevState, data: "added Item" }
+        }
+        else {
+            return { ...prevState, data: 'c' };
+        }
+
+
     }
 
 

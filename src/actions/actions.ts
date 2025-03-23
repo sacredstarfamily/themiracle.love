@@ -3,8 +3,8 @@ import bcrypt from "bcrypt";
 import prisma from "../lib/pc";
 import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { createSession, encrypt } from '../lib/sessions';
-import { cookies } from "next/headers";
+import { createSession } from '../lib/sessions';
+import { PayPalInterface } from "./paypalActions";
 import { randomUUID } from "crypto";
 import { logoutUser } from "../lib/sessions";
 
@@ -30,24 +30,14 @@ export async function createUser(
   const password = formData.get("password") as string;
   const hashedPassword = await bcrypt.hash(password, 10);
   const expiresAt: Date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-  const session = await encrypt({ email, expiresAt });
-  cookies().set(
-    'session',
-    session,
-    {
-      httpOnly: true,
-      secure: true,
-      expires: expiresAt,
-      sameSite: 'lax',
-      path: '/',
-    }
-  )
+  const y = await createSession(email);
+
 
   try {
     signUpSchema.parse({ name, email, password });
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return { ...prevState, data: error.message };
+      return { ...prevState, data: "fail" };
     }
   }
   try {
@@ -57,14 +47,14 @@ export async function createUser(
         name,
         email,
         hashedPassword,
-        sessionToken: session
+        sessionToken: y
       },
     });
     await prisma.session.create({
       data: {
         userId: user.id,
         ExpiresAt: expiresAt,
-        sessionId: session,
+        sessionId: y,
       }
     }
     );
@@ -75,20 +65,20 @@ export async function createUser(
         body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
       });
       const data = await check.json();
-
+      console.log(data)
 
       if (check.status === 200) {
 
-        return { ...prevState, data: data.message };
+        return { ...prevState, data: y };
       }
     }
-    return { ...prevState, data: "User created" };
+    return { ...prevState, data: y };
   } catch (error) {
     if (
       error instanceof Prisma.PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return { ...prevState, data: "Email already exists" };
+      return { ...prevState, data: "fail" };
     }
   }
 }
@@ -288,5 +278,8 @@ export async function logoutUserAction() {
 
 //Items functions
 export async function getAllItems() {
+  const paypal = new PayPalInterface();
+  const paypal_items = await paypal.getItems();
+  console.log(paypal_items)
   return prisma.item.findMany();
 }
