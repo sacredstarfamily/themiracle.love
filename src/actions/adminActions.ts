@@ -28,7 +28,7 @@ export async function uploadImage(formData: FormData) {
                     throw err;
                 }
             });
-            return { img_url: "/uploads/" + filename }
+            return { img_url: "/public/uploads/" + filename }
         }
     } catch (error) {
         console.error("Error writing file:", error);
