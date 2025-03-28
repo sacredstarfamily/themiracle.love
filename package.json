@@ -8,7 +8,7 @@
     "push-db": "npx prisma db push --force-reset",
     "migrate-db": "npx prisma migrate dev",
     "generate": "npx prisma generate",
-    "dev": "next dev",
+    "dev": "set NODE_ENV=production && next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

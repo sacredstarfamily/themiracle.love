@@ -30,6 +30,7 @@ export default function ShopPage() {
     }, []);
 
     useEffect(() => {
+        console.log(process.env.NODE_ENV);
         paypalMemo;
     }, [paypalMemo]);
     return (

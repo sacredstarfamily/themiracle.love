@@ -30,7 +30,7 @@ export class PayPalInterface {
                 'password': process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_SECRET || ''
             } : {
                 'username': process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID || '',
-                'password': process.env.PAYPAL_CLIENT_SECRET || ''
+                'password': process.env.NEXT_PUBLIC_LIVE_PAYPAL_SECRET || ''
             };
 
             try {
