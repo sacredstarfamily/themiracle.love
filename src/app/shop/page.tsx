@@ -16,7 +16,7 @@ export default function ShopPage() {
     const { cart } = useCartStore();
 
     const [showCart, setShowCart] = useState(false);
-    const clientId = process.env.NEXT_PUBLIC_PAYPAL_ClIENT_ID as string;
+    const clientId = process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID as string;
     const initialOptions: PayPalScriptOptions = {
         clientId: clientId,
         currency: 'USD',
