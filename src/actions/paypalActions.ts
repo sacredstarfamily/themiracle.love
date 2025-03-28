@@ -4,7 +4,7 @@ import qs from 'qs';
 
 const Env = process.env.NODE_ENV;
 
-const LIVE_URL = "https://api-m.paypal.com";
+const LIVE_URL = "https://api.paypal.com";
 
 const SANDBOX_API = "https://api-m.sandbox.paypal.com"
 let API_URL: string;
