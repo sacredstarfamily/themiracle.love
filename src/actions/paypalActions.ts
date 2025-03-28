@@ -92,7 +92,7 @@ export class PayPalInterface {
     }
     async getItems() {
         const token = await this.getToken();
-        console.log(token?.access_token)
+
         const url = API_URL + '/v1/catalogs/products?page_size=12&page=1&total_required=true';
         const headers = {
             'Accept': 'application/json',
