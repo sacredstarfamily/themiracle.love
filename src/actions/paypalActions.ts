@@ -29,7 +29,7 @@ export class PayPalInterface {
                 'username': process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_ID || '',
                 'password': process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_SECRET || ''
             } : {
-                'username': process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID || '',
+                'username': process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID || '',
                 'password': process.env.PAYPAL_CLIENT_SECRET || ''
             };
 
