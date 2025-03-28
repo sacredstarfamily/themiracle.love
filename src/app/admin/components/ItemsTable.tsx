@@ -1,4 +1,5 @@
 import { getAllItems } from "@/actions/actions";
+import Image from 'next/image';
 import { useEffect, useState } from "react";
 import { deleteItem } from "@/actions/adminActions";
 
@@ -33,7 +34,8 @@ export default function ItemsTable() {
                 <div className="flex flex-row flex-auto justify-center" key={item.id}>
                     <div className="max-w-sm bg-white border border-gray-200 rounded-lg shadow-sm dark:bg-gray-800 dark:border-gray-700" key={item.id}>
                         <a href="#">
-                            <img className="rounded-t-lg" src={item.img_url} alt="" />
+                            <Image className="rounded-t-lg" src={item.img_url} alt={item.name} width={500} height={500} />
+
                         </a>
                         <div className="p-5">
                             <a href="#">

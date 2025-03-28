@@ -42,7 +42,7 @@ export default function PayButton() {
         <div className="flex flex-col align-middle  justify-center">
             {isResolved ? (
                 <div className="w-1/2 mx-auto text-center">
-                    <h1>Pay With Paypal</h1>
+                    <h1>Donate to themiracle</h1>
                     <PayPalButtons {...buttonStyles} />
                 </div>
             ) : (

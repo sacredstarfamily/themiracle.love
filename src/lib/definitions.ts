@@ -15,3 +15,16 @@ export type User = {
     passwordResetToken?: number | null;
     passwordResetExpiry?: Date | null;
 }
+export type PayPalProduct = {
+    id: string;
+    name: string;
+    description?: string;
+    image_url?: string;
+    price?: number;
+    quantity?: number;
+    category?: string;
+    type?: string;
+    create_time: string;
+    update_time?: string;
+    links?: [];
+}
