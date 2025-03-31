@@ -17,7 +17,7 @@ export default function UsersComponent() {
             setUsers(users);
         }
         fetchUsers();
-    });
+    }, []);
     return (
         <div className="mx-3 mt-5 border-2">
             <h1>Users</h1>

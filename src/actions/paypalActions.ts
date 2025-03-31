@@ -93,7 +93,7 @@ export class PayPalInterface {
     async getItems() {
         const token = await this.getToken();
 
-        const url = API_URL + '/v1/catalogs/products?page_size=12&page=1&total_required=true';
+        const url = API_URL + '/v1/catalogs/products?page_size=12&page=3&total_required=true';
         const headers = {
             'Accept': 'application/json',
             'Accept-Language': 'en_US',
@@ -102,10 +102,7 @@ export class PayPalInterface {
         }
         try {
             const resp = await axios.get(url, { headers });
-            console.log(resp.data);
-            console.log(resp.data.products[0].id)
-            const tw = await this.getProduct(resp.data.products[0].id)
-            console.log(tw)
+
             return resp.data;
         } catch (e) {
             throw new Error(`Failed to get PayPal items: `);

@@ -123,7 +123,9 @@ export async function getUser(sessionToken: string) {
       sessionToken: true,
     },
   });
-  console.log("from getUser", user);
+  if (!user) {
+    return "fail";
+  }
   return user;
 }
 

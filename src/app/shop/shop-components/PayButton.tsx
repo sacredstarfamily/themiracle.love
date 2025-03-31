@@ -1,6 +1,7 @@
 'use client';
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
+import { Spinner } from "@/components/icons";
 
 
 
@@ -46,7 +47,7 @@ export default function PayButton() {
                     <PayPalButtons {...buttonStyles} />
                 </div>
             ) : (
-                <div>Loading...</div>
+                <div><Spinner /></div>
             )}
         </div>
     )
