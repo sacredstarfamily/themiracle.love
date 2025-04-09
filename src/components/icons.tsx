@@ -51,9 +51,9 @@ export function ThemiracleIcon(props: React.SVGProps<SVGSVGElement>) {
             viewBox="0 0 24 24"
             xmlns="http://www.w3.org/2000/svg">
 
-            <g transform="translate(-4.0345 -2.475)" fill="none" stroke="#000" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m16.034 14.475c-1-4-6-6-9-3-3 3 1.0625 10.861 9 12.96 7.9375-2.2381 11-9.9597 9-12.96-2-3-8-1-9 3z" stroke-width="2" />
-                <ellipse cx="16.034" cy="5.9407" rx="7.033" ry="1.4657" stroke-width="2" />
+            <g transform="translate(-4.0345 -2.475)" fill="none" stroke="#000" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m16.034 14.475c-1-4-6-6-9-3-3 3 1.0625 10.861 9 12.96 7.9375-2.2381 11-9.9597 9-12.96-2-3-8-1-9 3z" strokeWidth="2" />
+                <ellipse cx="16.034" cy="5.9407" rx="7.033" ry="1.4657" strokeWidth="2" />
             </g>
         </svg>
     )

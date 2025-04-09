@@ -1,5 +1,4 @@
-import { useAppKit } from '@reown/appkit/react'
-import { useAppKitAccount } from "@reown/appkit/react";
+import { useAppKit, useAppKitAccount } from '@reown/appkit/react';
 import { useEffect } from 'react';
 export default function ConnectButton() {
     // 4. Use modal hook
@@ -13,9 +12,8 @@ export default function ConnectButton() {
 
     return (
         <>
-
-            <li><button onClick={() => open()}>{isConnected ? (<p>View Wallet</p>) : (<p>ConnectWallet</p>)}</button></li>
-            <li><button onClick={() => open({ view: 'Networks' })}>Choose Network</button></li>
+            <li className="text-lg" onClick={() => open()}>{isConnected ? (<p>View Wallet</p>) : (<p>ConnectWallet</p>)}</li>
+            <li className="text-lg" onClick={() => open({ view: 'Networks' })}>Choose Network</li>
         </>
     )
 }

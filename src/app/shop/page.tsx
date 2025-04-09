@@ -1,16 +1,16 @@
 'use client';
 
-import { PayPalScriptProvider } from "@paypal/react-paypal-js";
-import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
-import PaypalCard from "./shop-components/PaypalCard";
-import PayButton from "./shop-components/PayButton";
 import { PayPalInterface } from "@/actions/paypalActions";
+import useCartStore from "@/context/cart-context";
+import { PayPalScriptOptions } from "@paypal/paypal-js/types/script-options";
+import { PayPalScriptProvider } from "@paypal/react-paypal-js";
 import { useEffect, useMemo, useState } from "react";
+import Footer from "../components/Footer";
+import Navbar from "../components/Navbar";
 import ShoppingCart from "../components/ShoppingCart";
 import ShoppingCartBtn from "../components/ShoppingCartBtn";
-import useCartStore from "@/context/cart-context";
+import PayButton from "./shop-components/PayButton";
+import PaypalCard from "./shop-components/PaypalCard";
 
 export default function ShopPage() {
     const { cart } = useCartStore();
@@ -30,7 +30,6 @@ export default function ShopPage() {
     }, []);
 
     useEffect(() => {
-        console.log(process.env.NODE_ENV);
         paypalMemo;
     }, [paypalMemo]);
     return (

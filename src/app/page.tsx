@@ -1,6 +1,7 @@
 "use client";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
+import { ThemiracleIcon } from '../components/icons';
 
 export default function Home() {
 
@@ -12,7 +13,8 @@ export default function Home() {
           Welcome to themiracle.love
         </h1>
         <p className="text-lg text-center self-center sm:text-2xl">
-          Create art, mint NFTs, discover artists, learn about blockchain, and more!
+          Join the exiting community of artists and collectors on <ThemiracleIcon className="inline-block w-8 h-8" /> themiracle.love
+          Create art, mint NFTs, discover artists, learn about blockchain!
         </p>
 
         <div className="border-2 border-black p-0  m-auto rounded-lg">

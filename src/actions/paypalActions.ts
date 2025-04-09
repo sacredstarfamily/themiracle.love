@@ -42,7 +42,7 @@ export class PayPalInterface {
                     { headers, auth: Eauth }
                 );
                 this._token = { ...resp.data, created: new Date().getTime() };
-                console.log(this._token);
+
                 if (this._token) {
                     this._token.created = new Date().getTime();
                 }
@@ -82,7 +82,7 @@ export class PayPalInterface {
         }
         try {
             const resp = await axios.post(url, data, { headers });
-            console.log(resp.data);
+
             return resp.data;
         } catch (e) {
 
@@ -120,7 +120,7 @@ export class PayPalInterface {
         }
         try {
             const resp = await axios.get(url, { headers });
-            console.log(resp.data);
+
             return resp.data;
         } catch (e) {
             console.log(e)
