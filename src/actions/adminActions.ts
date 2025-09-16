@@ -2,8 +2,8 @@
 
 import prisma from "../lib/pc";
 
-import { PayPalInterface } from "./paypalActions";
 import fs, { writeFile } from "fs";
+import { PayPalInterface } from "./paypalActions";
 
 import path from "path";
 
@@ -40,7 +40,7 @@ export async function addItem(
     prevState: Formstate | undefined,
     formData: FormData,
 ) {
-    const name = formData.get("item_name") as string;
+    const item_name = formData.get("item_name") as string;
     const paypal = new PayPalInterface();
     const price = Number(formData.get("item_price"));
     const quantity = Number(formData.get("item_quantity"));
@@ -49,24 +49,21 @@ export async function addItem(
         const iurl = await uploadImage(formData);
         const addedItem = await prisma.item.create({
             data: {
-                name,
+                name: item_name, // Ensure this matches the updated schema
                 price,
                 img_url: iurl!.img_url,
                 quantity
             }
         });
         if (addedItem) {
-            paypal.createItem(name, "blah", price, "https://themiracle.love/uploads" + iurl!.img_url)
+            paypal.createItem(item_name, "thiis is a description", price, "https://themiracle.love" + iurl!.img_url)
+            console.log("added item");
             return { ...prevState, data: "added Item" }
         }
         else {
             return { ...prevState, data: 'c' };
         }
-
-
     }
-
-
 }
 export async function getAllUsers() {
     try {

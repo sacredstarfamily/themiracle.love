@@ -3,9 +3,7 @@ import qs from 'qs';
 
 
 const Env = process.env.NODE_ENV;
-
 const LIVE_URL = "https://api.paypal.com";
-
 const SANDBOX_API = "https://api-m.sandbox.paypal.com"
 let API_URL: string;
 if (Env === 'production') {
@@ -13,8 +11,8 @@ if (Env === 'production') {
 } else {
     API_URL = SANDBOX_API
 }
-export class PayPalInterface {
 
+export class PayPalInterface {
     _token: { expires_in: number; created: number; access_token: string } | null = null;
     async getToken() {
         if (!this._token ||
@@ -60,14 +58,13 @@ export class PayPalInterface {
             'Accept-Language': 'en_US',
             'content-type': 'application/json',
             'Authorization': `Bearer ${token?.access_token}`
-        }
+        };
         const data = {
             "name": itemName,
             "description": itemDescription,
             "type": "SERVICE",
             "category": "SOFTWARE",
             "image_url": imageUrl,
-            "home_url": "https://themiracle.love",
             "pricing_schemes": [
                 {
                     "billing_cycle_sequence": 1,
@@ -76,24 +73,30 @@ export class PayPalInterface {
                             "value": itemPrice,
                             "currency_code": "USD"
                         }
-                    }
+                    },
                 }
-            ]
-        }
+            ],
+            "home_url": "https://themiracle.love",
+        };
+
         try {
-            const resp = await axios.post(url, data, { headers });
-
-            return resp.data;
-        } catch (e) {
-
-            console.log("error")
+            console.log("Creating item with data:", data);
+            const response = await axios.post(url, data, { headers });
+            console.log("Item created successfully:", response.data);
+            return response.data;
+        } catch (error) {
+            if (axios.isAxiosError(error)) {
+                console.error("Error creating item:", error.response?.data || error.message);
+                throw new Error(`Failed to create item: ${error.response?.data?.message || error.message}`);
+            } else {
+                console.error("Unexpected error:", error);
+                throw new Error("An unexpected error occurred while creating the item.");
+            }
         }
-
     }
     async getItems() {
         const token = await this.getToken();
-
-        const url = API_URL + '/v1/catalogs/products?page_size=12&page=3&total_required=true';
+        const url = API_URL + '/v1/catalogs/products?page_size=20&page=1&total_required=true';
         const headers = {
             'Accept': 'application/json',
             'Accept-Language': 'en_US',
@@ -102,16 +105,16 @@ export class PayPalInterface {
         }
         try {
             const resp = await axios.get(url, { headers });
-
+            console.log(resp.data)
             return resp.data;
         } catch (e) {
             throw new Error(`Failed to get PayPal items: `);
         }
     }
+
     async getProduct(id: string) {
         const token = await this.getToken();
-
-        const url = `${API_URL}/v1/catalogs/products/${id}`;
+        const url = API_URL + '/v1/catalogs/products/' + id;
         const headers = {
             'Accept': 'application/json',
             'Accept-Language': 'en_US',
@@ -120,10 +123,9 @@ export class PayPalInterface {
         }
         try {
             const resp = await axios.get(url, { headers });
-
             return resp.data;
         } catch (e) {
-            console.log(e)
+            console.error(e)
         }
     }
 }

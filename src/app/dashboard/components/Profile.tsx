@@ -1,7 +1,7 @@
 import { User } from "@/lib/definitions";
-import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
-import { useAppKitConnection } from "@reown/appkit-adapter-solana/react";
 import type { Provider } from "@reown/appkit-adapter-solana";
+import { useAppKitConnection } from "@reown/appkit-adapter-solana/react";
+import { useAppKitAccount, useAppKitProvider } from "@reown/appkit/react";
 
 import { addUsersWallet } from "@/lib/themiracle";
 
@@ -22,7 +22,7 @@ export default function Profile(user: User) {
                 addUsersWallet(user.id, walletProvider.publicKey.toBase58(), 'solana')
             }
         } catch (err) {
-            // Handle Error Here
+            console.error(err)
         }
     }
     async function onSignMessage() {
@@ -36,7 +36,7 @@ export default function Profile(user: User) {
             const signature = await walletProvider.signMessage(encodedMessage)
             console.log(signature)
         } catch (err) {
-            // Handle Error Here
+            console.error(err)
         }
     }
     return (
