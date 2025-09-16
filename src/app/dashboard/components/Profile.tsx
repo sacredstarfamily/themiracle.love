@@ -11,6 +11,7 @@ export default function Profile(user: User) {
     const { connection } = useAppKitConnection();
     const { walletProvider } = useAppKitProvider<Provider>('solana');
     async function getBalance() {
+        console.log('getting balance')
         try {
             if (!walletProvider || !address) {
                 throw Error('user is disconnected')
@@ -26,6 +27,7 @@ export default function Profile(user: User) {
         }
     }
     async function onSignMessage() {
+        console.log('signing message')
         try {
             if (!walletProvider || !address) {
                 throw Error('user is disconnected')
