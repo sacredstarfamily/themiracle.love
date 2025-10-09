@@ -1,12 +1,11 @@
 "use server";
-import bcrypt from "bcrypt";
-import prisma from "../lib/pc";
-import { z } from "zod";
 import { Prisma } from "@prisma/client";
-import { createSession } from '../lib/sessions';
-import { PayPalInterface } from "./paypalActions";
+import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
-import { logoutUser } from "../lib/sessions";
+import { z } from "zod";
+import prisma from "../lib/pc";
+import { createSession, logoutUser } from '../lib/sessions';
+import { PayPalInterface } from "./paypalActions";
 
 
 
@@ -280,8 +279,136 @@ export async function logoutUserAction() {
 
 //Items functions
 export async function getAllItems() {
-  const paypal = new PayPalInterface();
-  const paypal_items = await paypal.getItems();
-  console.log(paypal_items)
-  return prisma.item.findMany();
+  try {
+    const paypal = new PayPalInterface();
+
+    // Fetch both local items and PayPal items in parallel
+    const [localItems, paypalResponse] = await Promise.all([
+      prisma.item.findMany(),
+      paypal.getItems().catch(error => {
+        console.error("Failed to fetch PayPal items:", error);
+        return { products: [] }; // Return empty array if PayPal fails
+      })
+    ]);
+
+    console.log("PayPal items response:", paypalResponse);
+
+    const paypalItems = Array.isArray(paypalResponse.products) ? paypalResponse.products : [];
+
+    // Create a map of PayPal items by ID for easy lookup
+    type PayPalProduct = {
+      id: string;
+      name?: string;
+      image_url?: string;
+      // Add other relevant fields if needed
+      [key: string]: unknown;
+    };
+
+    const paypalItemsMap = new Map(
+      paypalItems.map((item: PayPalProduct) => [item.id, item])
+    );
+
+    // Merge local items with PayPal data
+    const mergedItems = localItems.map(localItem => {
+      const paypalItem = localItem.paypal_product_id
+        ? paypalItemsMap.get(localItem.paypal_product_id)
+        : null;
+
+      return {
+        ...localItem,
+        paypal_data: paypalItem || null,
+        // Add PayPal status
+        paypal_status: paypalItem ? 'synced' as const : (localItem.paypal_product_id ? 'missing' as const : 'local_only' as const)
+      };
+    });
+
+    // Find PayPal items that don't exist in local database
+    const orphanedPayPalItems = paypalItems
+      .filter((paypalItem: PayPalProduct) =>
+        !localItems.some(localItem => localItem.paypal_product_id === paypalItem.id)
+      )
+      .map((paypalItem: PayPalProduct) => ({
+        id: `paypal_${paypalItem.id}`,
+        name: paypalItem.name || 'Unnamed Product',
+        img_url: paypalItem.image_url || '/placeholder.png',
+        price: 0, // PayPal catalog doesn't store price in product
+        quantity: 0,
+        paypal_product_id: paypalItem.id,
+        paypal_data: paypalItem,
+        paypal_status: 'paypal_only' as const
+      }));
+
+    // Combine all items
+    const allItems = [...mergedItems, ...orphanedPayPalItems];
+
+    console.log(`Found ${localItems.length} local items, ${paypalItems.length} PayPal items, ${orphanedPayPalItems.length} orphaned PayPal items`);
+
+    return allItems;
+  } catch (error) {
+    console.error("Error in getAllItems:", error);
+    // Fallback to local items only if everything fails
+    const localItems = await prisma.item.findMany();
+    return localItems.map(item => ({
+      ...item,
+      paypal_data: null,
+      paypal_status: 'local_only' as const
+    }));
+  }
+}
+
+// Add function to sync PayPal catalog with local database
+export async function syncPayPalCatalog() {
+  try {
+    const paypal = new PayPalInterface();
+    const paypalResponse = await paypal.getItems();
+    const paypalItems = paypalResponse.products || [];
+
+    const syncResults = {
+      updated: 0,
+      created: 0,
+      errors: 0
+    };
+
+    for (const paypalItem of paypalItems) {
+      try {
+        // Check if item exists in local database
+        const existingItem = await prisma.item.findFirst({
+          where: { paypal_product_id: paypalItem.id }
+        });
+
+        if (existingItem) {
+          // Update existing item with PayPal data
+          await prisma.item.update({
+            where: { id: existingItem.id },
+            data: {
+              name: paypalItem.name,
+              img_url: paypalItem.image_url || existingItem.img_url,
+              // Don't update price/quantity as PayPal catalog doesn't store these
+            }
+          });
+          syncResults.updated++;
+        } else {
+          // Create new item from PayPal data
+          await prisma.item.create({
+            data: {
+              name: paypalItem.name,
+              img_url: paypalItem.image_url || '/placeholder.png',
+              price: 0, // Default price, should be updated manually
+              quantity: 0, // Default quantity, should be updated manually
+              paypal_product_id: paypalItem.id
+            }
+          });
+          syncResults.created++;
+        }
+      } catch (itemError) {
+        console.error(`Error syncing PayPal item ${paypalItem.id}:`, itemError);
+        syncResults.errors++;
+      }
+    }
+
+    return syncResults;
+  } catch (error) {
+    console.error("Error syncing PayPal catalog:", error);
+    throw new Error("Failed to sync PayPal catalog");
+  }
 }

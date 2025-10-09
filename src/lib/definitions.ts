@@ -2,29 +2,46 @@ export type SessionPayload = {
     email: string;
     expiresAt: Date;
 }
-export type User = {
+export interface User {
     id: string;
     name: string | null;
     email: string;
-    hashedPassword?: string | null;
-    verificationToken?: string | null;
     sessionToken: string | null;
-    emailVerified?: boolean;
-    walletAddress?: string | null;
-    passwordResetLink?: string | null;
-    passwordResetToken?: number | null;
-    passwordResetExpiry?: Date | null;
 }
-export type PayPalProduct = {
+
+export interface PayPalProduct {
     id: string;
     name: string;
     description?: string;
     image_url?: string;
-    price?: number;
-    quantity?: number;
+    price: number; // Make price required
     category?: string;
     type?: string;
-    create_time: string;
-    update_time?: string;
-    links?: [];
+    quantity?: number;
+}
+
+export interface Item {
+    id: string;
+    name: string;
+    img_url: string;
+    price: number;
+    quantity: number;
+    paypal_product_id?: string | null;
+    paypal_data?: unknown;
+    paypal_status?: 'synced' | 'missing' | 'local_only' | 'paypal_only';
+}
+
+export interface DeleteItemResult {
+    id: string;
+    name: string;
+    img_url: string;
+    price: number;
+    quantity: number;
+    paypal_product_id?: string | null;
+    paypalDeleted: boolean;
+    paypalMessage: string;
+}
+
+export interface CartItem extends PayPalProduct {
+    quantity: number;
 }

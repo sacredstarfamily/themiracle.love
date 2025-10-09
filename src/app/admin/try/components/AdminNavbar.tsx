@@ -1,31 +1,41 @@
 'use client'
+import { memo, useCallback, useState } from "react";
 import AdminNavDesk from "./AdminNavDesk";
 import AdminNavMobile from "./AdminNavMobile";
 import AdminNavMobileBtn from "./AdminNavMobileBtn";
-import { useState } from "react";
 
 export type AdminNavBarProps = {
     toggleView: (view: string) => void;
 }
-export default function AdminNavbar({ toggleView }: AdminNavBarProps) {
+
+function AdminNavbar({ toggleView }: AdminNavBarProps) {
     const [isDrawerOpen, setIsDrawerOpen] = useState(false);
-    const handleViewChange = (view: string) => {
+
+    // Memoize callbacks to prevent child re-renders
+    const handleViewChange = useCallback((view: string) => {
         toggleView(view);
-    }
-    const handleDrawerToggle = () => {
-        setIsDrawerOpen(!isDrawerOpen);
-    };
+    }, [toggleView]);
+
+    const handleDrawerToggle = useCallback(() => {
+        setIsDrawerOpen(prev => !prev);
+    }, []);
+
     return (
         <>
             <div className="hidden relative py-0 sm:flex flex-col justify-center">
-                <AdminNavDesk toggleView={(i) => handleViewChange(i)} />
+                <AdminNavDesk toggleView={handleViewChange} />
             </div>
             <div className="sm:hidden relative flex flex-row my-0">
                 <AdminNavMobileBtn onClick={handleDrawerToggle} />
-
-                <AdminNavMobile toggleView={(i) => handleViewChange(i)} isOpen={isDrawerOpen} onClose={handleDrawerToggle} />
-
+                <AdminNavMobile
+                    toggleView={handleViewChange}
+                    isOpen={isDrawerOpen}
+                    onClose={handleDrawerToggle}
+                />
             </div>
         </>
     )
 }
+
+// Export memoized component to prevent unnecessary re-renders
+export default memo(AdminNavbar);

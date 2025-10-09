@@ -66,11 +66,12 @@ model Order {
 }
 
 model Item {
-  id       String  @id @default(cuid())
-  name     String
-  img_url  String
-  price    Float
-  quantity Int
-  Order    Order?  @relation(fields: [orderId], references: [id])
-  orderId  String?
+  id                String  @id @default(cuid())
+  name              String
+  img_url           String
+  price             Float
+  quantity          Int
+  paypal_product_id String? // Add this field
+  Order             Order?  @relation(fields: [orderId], references: [id])
+  orderId           String?
 }
