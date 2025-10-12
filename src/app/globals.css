@@ -45,6 +45,20 @@
     line-height: 1.25rem;
     font-weight: 500;
   }
+
+  /* FontAwesome icon optimization */
+  .fa, .fas, .far, .fal, .fab {
+    font-display: swap;
+  }
+
+  /* Preload FontAwesome icons for better performance */
+  svg[data-icon] {
+    display: inline-block;
+    font-size: inherit;
+    height: 1em;
+    overflow: visible;
+    vertical-align: -0.125em;
+  }
 }
 
 @layer components {
@@ -104,7 +118,8 @@
 
   /* Fix for PayPal popup/overlay issues */
   #paypal-checkout-sdk__container {
-    z-index: 9999 !important;
+    z-index: 10000 !important;
+    position: relative !important;
   }
 
   /* Prevent PayPal button from closing modal */
@@ -113,20 +128,107 @@
     z-index: auto;
   }
 
-  /* Navbar sticky behavior for smaller screens */
+  /* Sticky navbar support */
+  .sticky-navbar-offset {
+    padding-top: 4rem; /* Account for sticky navbar height */
+  }
+
+  /* Shopping cart sticky positioning - enhanced */
+  .shopping-cart-container {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    z-index: 60; /* Higher than navbar */
+    box-shadow: -4px 0 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .shopping-cart-content {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    max-height: 100vh;
+  }
+
+  .shopping-cart-header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: white;
+    border-bottom: 1px solid #e5e7eb;
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .shopping-cart-footer {
+    position: sticky;
+    bottom: 0;
+    background: white;
+    border-top: 1px solid #e5e7eb;
+    box-shadow: 0 -1px 3px 0 rgba(0, 0, 0, 0.1);
+  }
+
+  .shopping-cart-items {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1rem;
+  }
+
+  /* Enhanced PayPal error handling styles */
+  .paypal-error-recovery {
+    animation: shake 0.5s ease-in-out;
+  }
+
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+  }
+
+  /* Enhanced PayPal modal handling - prevent interference with cart */
+  #paypal-checkout-sdk__container {
+    z-index: 10000 !important;
+    position: relative !important;
+  }
+
+  /* Ensure PayPal buttons don't interfere with cart backdrop clicks */
+  .paypal-button-container {
+    position: relative;
+    z-index: 1;
+    pointer-events: auto;
+  }
+
+  /* Prevent cart backdrop from interfering with PayPal */
+  .paypal-button-container iframe,
+  .paypal-button-container [data-paypal-checkout] {
+    pointer-events: auto !important;
+  }
+
+  /* Style for processing state */
+  .cart-processing {
+    pointer-events: none;
+    opacity: 0.7;
+  }
+
+  .cart-processing .paypal-button-container {
+    pointer-events: auto;
+  }
+
+  /* Mobile responsive adjustments for sticky elements */
   @media (max-width: 768px) {
-    body {
-      padding-top: 0; /* Remove any default padding */
+    .sticky-navbar-offset {
+      padding-top: 5rem;
     }
     
-    /* Ensure content doesn't hide behind sticky navbar */
-    main {
-      padding-top: 1rem;
+    .shopping-cart-container {
+      width: 100vw;
+      max-width: 100vw;
     }
-    
-    /* Adjust for pages that need extra spacing */
-    .content-with-sticky-nav {
-      margin-top: 4rem;
+  }
+
+  @media (min-width: 769px) {
+    .shopping-cart-container {
+      width: 28rem; /* max-w-md equivalent */
+      max-width: 28rem;
     }
   }
 }
@@ -150,3 +252,4 @@ wui-account-button > button {
 iframe {
   z-index: 0 !important;
 }
+

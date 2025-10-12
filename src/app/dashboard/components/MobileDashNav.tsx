@@ -24,7 +24,7 @@ export default function MobileDashNav({ isOpen, onClose, toggleView }: MobileDas
             <ul className="flex flex-col space-y-4 mb-1 overflow-scroll">
                 <ConnectButton />
                 <li><button onClick={() => { handleViewChange('profile'); onClose() }}>Profile</button></li>
-                <li><button onClick={() => { handleViewChange('gallery'); onClose() }}>Gallery</button></li>
+                <li><button onClick={() => { handleViewChange('mint'); onClose() }}>Mint</button></li>
                 <li><button onClick={() => { handleViewChange('settings'); onClose() }}>Settings</button></li>
 
             </ul>

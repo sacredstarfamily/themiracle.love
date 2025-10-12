@@ -1,95 +1,358 @@
 'use client';
 
-import useCartStore from "@/context/cart-context";
-import { faXmark } from "@fortawesome/free-solid-svg-icons";
+import { Spinner } from "@/components/icons";
+import useCartStore from '@/context/cart-context';
+import { faMinus, faPlus, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
+import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
+import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Image from "next/image";
+import { useState } from "react";
 
-interface ShoppingCartProps {
+type ShoppingCartProps = {
+    isOpen: boolean;
     onClose: () => void;
-}
+};
 
-export default function ShoppingCart({ onClose }: ShoppingCartProps) {
-    const { cart, removeFromCart } = useCartStore();
+export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
+    const [{ isResolved }] = usePayPalScriptReducer();
+    const [isProcessing, setIsProcessing] = useState(false);
+    const [paymentError, setPaymentError] = useState<string | null>(null);
+    const [paymentSuccess, setPaymentSuccess] = useState(false);
+
+    const {
+        cart,
+        removeFromCart,
+        updateQuantity,
+        clearCart,
+        getTotalValue,
+        getItemCount
+    } = useCartStore();
+
+    const totalValue = getTotalValue();
+    const itemCount = getItemCount();
+
+    if (!isOpen) return null;
+
+    // Prevent cart from closing during PayPal interactions
+    const handleBackdropClick = (e: React.MouseEvent) => {
+        // Only close if clicking the backdrop and not processing payment
+        if (e.target === e.currentTarget && !isProcessing) {
+            onClose();
+        }
+    };
+
+    // Enhanced close handler that respects PayPal state
+    const handleCartClose = () => {
+        if (isProcessing) {
+            console.log('Payment is processing, preventing cart close');
+            return;
+        }
+        onClose();
+    };
+
+    const paypalButtonOptions: PayPalButtonsComponentOptions = {
+        style: {
+            color: "blue",
+            shape: "rect",
+            label: "pay",
+            disableMaxWidth: false,
+            height: 45,
+            layout: "vertical"
+        },
+        createOrder: async (data, actions) => {
+            setIsProcessing(true);
+            setPaymentError(null);
+
+            try {
+                const items = cart.map(item => ({
+                    name: item.name || 'Unknown Item',
+                    quantity: (item.quantity || 1).toString(),
+                    category: 'DIGITAL_GOODS' as const,
+                    unit_amount: {
+                        currency_code: 'USD',
+                        value: (item.price || 0).toFixed(2)
+                    }
+                }));
+
+                console.log("Creating PayPal order with items:", items);
+
+                return actions.order.create({
+                    intent: "CAPTURE",
+                    purchase_units: [
+                        {
+                            reference_id: `order_${Date.now()}`,
+                            amount: {
+                                currency_code: "USD",
+                                value: totalValue.toFixed(2),
+                                breakdown: {
+                                    item_total: {
+                                        currency_code: "USD",
+                                        value: totalValue.toFixed(2)
+                                    }
+                                }
+                            },
+                            items: items,
+                            description: `Purchase of ${itemCount} items from themiracle.love`
+                        }
+                    ],
+                    application_context: {
+                        brand_name: "themiracle.love",
+                        landing_page: "BILLING",
+                        shipping_preference: "NO_SHIPPING",
+                        user_action: "PAY_NOW"
+                    }
+                });
+            } catch (error) {
+                console.error("Error creating PayPal order:", error);
+                setPaymentError("Failed to create payment order. Please try again.");
+                setIsProcessing(false);
+                throw error;
+            }
+        },
+        onApprove: async (data, actions) => {
+            try {
+                console.log("PayPal payment approved, capturing order:", data.orderID);
+
+                const details = await actions.order!.capture();
+                console.log("Payment captured successfully:", details);
+
+                // Handle successful payment
+                setPaymentSuccess(true);
+                setPaymentError(null);
+
+                // Clear the cart after successful payment
+                clearCart();
+
+                // Show success message
+                alert(
+                    `🎉 Payment successful!\n\nTransaction ID: ${details.id}\nAmount: $${totalValue.toFixed(2)}\n\nThank you for your purchase! Your digital items will be available in your account shortly.`
+                );
+
+                // Close the cart immediately after success
+                onClose();
+                setPaymentSuccess(false);
+
+            } catch (error) {
+                console.error("Payment capture error:", error);
+                setPaymentError("Payment was approved but failed to complete. Please contact support.");
+                alert("There was an error processing your payment. Please contact support with your order details.");
+            } finally {
+                setIsProcessing(false);
+            }
+        },
+        onError: (error) => {
+            console.error("PayPal error:", error);
+            setPaymentError("PayPal encountered an error. Please try again or use a different payment method.");
+            setIsProcessing(false);
+            alert("There was an error with PayPal. Please try again or contact support if the problem persists.");
+        },
+        onCancel: (data) => {
+            console.log("Payment cancelled by user:", data);
+            setIsProcessing(false);
+            setPaymentError(null);
+            // Don't close cart on cancel - let user try again
+        }
+    };
 
     return (
-        <div className="bg-white bg-opacity-55 fixed inset-0 flex justify-center items-center z-50" role="dialog" aria-modal="true" aria-labelledby="shoppingCartTitle">
-            <button className="absolute right-4 top-4 p-3 z-60" onClick={onClose}>
-                <FontAwesomeIcon className="text-3xl text-gray-700 hover:text-gray-900" icon={faXmark} />
-            </button>
+        <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end"
+            onClick={handleBackdropClick}
+        >
+            <div className="bg-white w-full max-w-md h-full shadow-lg transform transition-transform overflow-hidden flex flex-col">
+                {/* Sticky Header */}
+                <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-white shadow-sm">
+                    <h2 className="text-xl font-semibold text-gray-800">
+                        Shopping Cart ({itemCount})
+                    </h2>
+                    <button
+                        onClick={handleCartClose}
+                        disabled={isProcessing}
+                        className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        aria-label="Close cart"
+                    >
+                        <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-600" />
+                    </button>
+                </div>
 
-            <div className="bg-white w-11/12 md:w-3/4 lg:w-1/2 h-3/4 z-50 p-5 rounded-lg shadow-lg">
-                <h2 className="text-2xl font-bold mb-4">Shopping Cart</h2>
-
-                {cart.length === 0 ? (
-                    <div className="text-center text-gray-500 py-8">
-                        <p>Your cart is empty.</p>
+                {/* Payment Status Messages */}
+                {paymentError && (
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-2 rounded relative">
                         <button
-                            onClick={onClose}
-                            className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+                            onClick={() => setPaymentError(null)}
+                            className="absolute top-1 right-2 text-red-400 hover:text-red-600"
                         >
-                            Continue Shopping
+                            ×
                         </button>
+                        <p className="text-sm font-medium">Payment Error</p>
+                        <p className="text-sm">{paymentError}</p>
                     </div>
-                ) : (
-                    <div className="overflow-y-auto h-3/4 scrollbar">
-                        {cart.map((item) => (
-                            <div key={item.id} className="flex justify-between items-center border-b py-2">
-                                {item.image_url ? (
-                                    <Image
-                                        src={item.image_url}
-                                        alt={item.name}
-                                        className="w-16 h-16 object-cover rounded"
-                                        width={64}
-                                        height={64}
-                                    />
-                                ) : (
-                                    <div className="w-16 h-16 bg-gray-200 rounded flex items-center justify-center">
-                                        <span className="text-gray-500 text-xs">No Image</span>
+                )}
+
+                {paymentSuccess && (
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 mx-4 mt-2 rounded">
+                        <p className="text-sm">✅ Payment successful! Thank you for your purchase.</p>
+                    </div>
+                )}
+
+                {/* Processing indicator */}
+                {isProcessing && (
+                    <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 mx-4 mt-2 rounded">
+                        <p className="text-sm">💳 Processing payment... Please wait and do not close this window.</p>
+                    </div>
+                )}
+
+                {/* Scrollable Cart Items */}
+                <div className="flex-1 overflow-y-auto p-4">
+                    {cart.length === 0 ? (
+                        <div className="text-center py-12 text-gray-500">
+                            <div className="mb-4">
+                                <svg
+                                    className="w-12 h-12 text-gray-300 mx-auto mb-4"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6" />
+                                </svg>
+                            </div>
+                            <p className="text-lg font-medium">Your cart is empty</p>
+                            <p className="text-sm mt-2">Add some items to get started!</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-4">
+                            {cart.map((item) => (
+                                <div key={item.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    {/* Item Image */}
+                                    <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                                        <Image
+                                            src={item.image_url || '/placeholder.png'}
+                                            alt={item.name || 'Product'}
+                                            fill
+                                            className="object-cover"
+                                        />
                                     </div>
-                                )}
 
-                                <div className="flex flex-col ml-4 flex-grow">
-                                    <h3 className="text-lg font-semibold">{item.name}</h3>
-                                    <p className="text-gray-500">${item.price?.toFixed(2) || '0.00'}</p>
+                                    {/* Item Details */}
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="font-medium text-sm truncate text-gray-900">
+                                            {item.name}
+                                        </h3>
+                                        <p className="text-gray-600 text-xs">
+                                            ${(item.price || 0).toFixed(2)} each
+                                        </p>
+
+                                        {/* Quantity Controls */}
+                                        <div className="flex items-center space-x-2 mt-2">
+                                            <button
+                                                onClick={() => updateQuantity(item.id, (item.quantity || 1) - 1)}
+                                                className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors"
+                                                aria-label="Decrease quantity"
+                                            >
+                                                <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
+                                            </button>
+                                            <span className="text-sm font-medium w-8 text-center">
+                                                {item.quantity || 1}
+                                            </span>
+                                            <button
+                                                onClick={() => updateQuantity(item.id, (item.quantity || 1) + 1)}
+                                                className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors"
+                                                aria-label="Increase quantity"
+                                            >
+                                                <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {/* Item Total & Remove */}
+                                    <div className="text-right flex-shrink-0">
+                                        <p className="font-medium text-sm text-gray-900">
+                                            ${((item.price || 0) * (item.quantity || 1)).toFixed(2)}
+                                        </p>
+                                        <button
+                                            onClick={() => removeFromCart(item.id)}
+                                            className="mt-2 p-1 text-red-500 hover:bg-red-50 rounded transition-colors"
+                                            aria-label="Remove item"
+                                        >
+                                            <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
 
+                {/* Sticky Footer with Total and PayPal */}
+                {cart.length > 0 && (
+                    <div className="sticky bottom-0 border-t p-4 space-y-4 bg-white shadow-lg">
+                        {/* Total */}
+                        <div className="flex justify-between items-center text-lg font-semibold text-gray-900 border-t pt-2">
+                            <span>Total:</span>
+                            <span>${totalValue.toFixed(2)} USD</span>
+                        </div>
+
+                        {/* Clear Cart Button */}
+                        <button
+                            onClick={() => {
+                                if (confirm('Are you sure you want to clear your cart?')) {
+                                    clearCart();
+                                    setPaymentError(null);
+                                    setPaymentSuccess(false);
+                                }
+                            }}
+                            disabled={isProcessing}
+                            className="w-full py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            Clear Cart
+                        </button>
+
+                        {/* PayPal Buttons */}
+                        <div className="paypal-button-container relative">
+                            {paymentError && (
                                 <button
-                                    className="text-red-500 hover:text-red-700 px-2 py-1 rounded"
-                                    onClick={() => removeFromCart(item.id)}
+                                    onClick={() => {
+                                        setPaymentError(null);
+                                        setIsProcessing(false);
+                                    }}
+                                    className="w-full mb-2 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                                 >
-                                    Remove
+                                    Try Payment Again
                                 </button>
-                            </div>
-                        ))}
+                            )}
 
-                        <div className="mt-4 pt-4 border-t">
-                            <div className="flex justify-between items-center mb-4">
-                                <p className="text-lg font-semibold">Total:</p>
-                                <p className="text-lg font-semibold">
-                                    ${cart.reduce((total, item) => total + (item.price || 0), 0).toFixed(2)}
+                            {isResolved && !paymentSuccess ? (
+                                <PayPalButtons {...paypalButtonOptions} />
+                            ) : (
+                                <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
+                                    <Spinner />
+                                    <span className="ml-2 text-sm text-gray-600">
+                                        {isProcessing ? 'Processing payment...' :
+                                            paymentSuccess ? 'Payment completed!' :
+                                                'Loading PayPal...'}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Enhanced Security Notice */}
+                        <div className="text-center">
+                            <p className="text-xs text-gray-500">
+                                🔒 Secure payment powered by PayPal
+                            </p>
+                            <p className="text-xs text-gray-400 mt-1">
+                                Your payment information is encrypted and secure
+                            </p>
+                            {isProcessing && (
+                                <p className="text-xs text-blue-500 mt-1 font-medium">
+                                    ⚠️ Do not close this window during payment processing
                                 </p>
-                            </div>
-
-                            <div className="flex gap-2">
-                                <button
-                                    className="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700"
-                                    onClick={() => { console.log("checkout") }}
-                                >
-                                    Checkout
-                                </button>
-
-                                <button
-                                    className="flex-1 bg-gray-300 text-gray-700 py-2 px-4 rounded hover:bg-gray-400"
-                                    onClick={onClose}
-                                >
-                                    Continue Shopping
-                                </button>
-                            </div>
+                            )}
                         </div>
                     </div>
                 )}
             </div>
         </div>
-    )
+    );
 }

@@ -13,7 +13,7 @@ export default function ShopPage() {
     const [items, setItems] = useState<Item[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [showCart, setShowCart] = useState(false);
+    const [isCartOpen, setIsCartOpen] = useState(false);
 
     useEffect(() => {
         const fetchItems = async () => {
@@ -42,11 +42,13 @@ export default function ShopPage() {
     }, []);
 
     const handleCartToggle = () => {
-        setShowCart(!showCart);
+        console.log('Cart toggle clicked, current state:', isCartOpen);
+        setIsCartOpen(!isCartOpen);
     };
 
     const handleCartClose = () => {
-        setShowCart(false);
+        console.log('Cart close clicked');
+        setIsCartOpen(false);
     };
 
     if (loading) {
@@ -80,9 +82,14 @@ export default function ShopPage() {
     return (
         <div>
             <Navbar />
-            <ShoppingCartBtn onClick={handleCartToggle} />
 
-            <main className="container mx-auto px-4 py-8 mt-16">
+            {/* Fixed positioning for cart button, accounting for sticky navbar */}
+            <div className="fixed top-20 right-4 z-40">
+                <ShoppingCartBtn onClick={handleCartToggle} />
+            </div>
+
+            {/* Main content with top padding for sticky navbar */}
+            <main className="container mx-auto px-4 py-8 pt-24">
 
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Shop</h1>
@@ -107,7 +114,7 @@ export default function ShopPage() {
                 )}
             </main>
 
-            {showCart && <ShoppingCart onClose={handleCartClose} />}
+            <ShoppingCart isOpen={isCartOpen} onClose={handleCartClose} />
             <Footer />
         </div>
     );

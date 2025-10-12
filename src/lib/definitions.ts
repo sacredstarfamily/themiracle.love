@@ -13,11 +13,13 @@ export interface PayPalProduct {
     id: string;
     name: string;
     description?: string;
-    image_url?: string;
-    price: number; // Make price required
-    category?: string;
     type?: string;
-    quantity?: number;
+    category?: 'DIGITAL_GOODS' | 'PHYSICAL_GOODS';
+    image_url?: string;
+    home_url?: string;
+    price?: number; // Price for cart functionality
+    quantity?: number; // Quantity for cart items
+    [key: string]: unknown;
 }
 
 export interface Item {

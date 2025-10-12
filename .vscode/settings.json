@@ -28,5 +28,32 @@
     },
     "WillLuke.nextjs.addTypesOnSave": true,
     "WillLuke.nextjs.hasPrompted": true,
-    "postman.settings.dotenv-detection-notification-visibility": false
+    "postman.settings.dotenv-detection-notification-visibility": false,
+    "json.schemaDownload.enable": false,
+    "json.validate.enable": false,
+    "typescript.preferences.includePackageJsonAutoImports": "auto",
+    "typescript.suggest.autoImports": true,
+    "editor.codeActionsOnSave": {
+        "source.fixAll.eslint": "explicit"
+    },
+    "eslint.workingDirectories": ["."],
+    "files.associations": {
+        "*.json": "jsonc",
+        "*.css": "tailwindcss"
+    },
+    "emmet.includeLanguages": {
+        "javascript": "javascriptreact",
+        "typescript": "typescriptreact"
+    },
+    "tailwindCSS.includeLanguages": {
+        "css": "css",
+        "javascript": "javascript",
+        "typescript": "typescript"
+    },
+    "css.customData": [
+        ".vscode/css_custom_data.json"
+    ],
+    "css.validate": false,
+    "less.validate": false,
+    "scss.validate": false
 }
