@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import useCartStore from "@/context/cart-context";
 import Image from "next/image";
+import { useState } from "react";
 
 interface ItemCardProps {
     item: Item;
@@ -12,6 +13,25 @@ interface ItemCardProps {
 
 export function NItemCard({ item }: ItemCardProps) {
     const { addToCart } = useCartStore();
+    const [imageError, setImageError] = useState(false);
+
+    // Fix image URL path
+    const getImageUrl = (url: string) => {
+        if (!url) return '/placeholder.png';
+
+        // Remove /public prefix if it exists
+        if (url.startsWith('/public/')) {
+            return url.replace('/public', '');
+        }
+
+        // If it's already a proper URL (starts with http or /)
+        if (url.startsWith('http') || url.startsWith('/')) {
+            return url;
+        }
+
+        // Add leading slash for relative paths
+        return '/' + url;
+    };
 
     const handleAddToCart = () => {
         // Convert Item to PayPalProduct format for cart
@@ -28,20 +48,24 @@ export function NItemCard({ item }: ItemCardProps) {
         console.log("Added to cart:", item.name);
     };
 
+    const imageUrl = getImageUrl(item.img_url);
+
     return (
         <Card className="overflow-hidden transition-all hover:shadow-lg hover:scale-[1.02] duration-300">
             <div className="relative aspect-square overflow-hidden bg-muted">
                 <Image
-                    src={item.img_url || "/placeholder.png"}
+                    src={imageError ? '/placeholder.png' : imageUrl}
                     alt={item.name}
                     fill
                     className="object-cover transition-transform hover:scale-105 duration-300"
+                    onError={() => setImageError(true)}
+                    unoptimized={imageUrl.startsWith('/uploads/')}
                 />
                 {item.paypal_status && (
                     <div className="absolute top-2 right-2">
                         <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.paypal_status === 'synced' ? 'bg-green-100 text-green-800' :
-                                item.paypal_status === 'local_only' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
+                            item.paypal_status === 'local_only' ? 'bg-yellow-100 text-yellow-800' :
+                                'bg-gray-100 text-gray-800'
                             }`}>
                             {item.paypal_status === 'synced' ? 'In Stock' : 'Local Only'}
                         </span>

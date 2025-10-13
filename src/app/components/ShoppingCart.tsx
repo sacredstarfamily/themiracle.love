@@ -1,6 +1,8 @@
 'use client';
 
+import { createOrder } from '@/actions/orderActions';
 import { Spinner } from "@/components/icons";
+import useAuthStore from '@/context/auth-context';
 import useCartStore from '@/context/cart-context';
 import { faMinus, faPlus, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
@@ -29,8 +31,28 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         getItemCount
     } = useCartStore();
 
+    const { user } = useAuthStore();
+
     const totalValue = getTotalValue();
     const itemCount = getItemCount();
+
+    // Fix image URL path function
+    const getImageUrl = (url: string | undefined) => {
+        if (!url) return '/placeholder.png';
+
+        // Remove /public prefix if it exists
+        if (url.startsWith('/public/')) {
+            return url.replace('/public', '');
+        }
+
+        // If it's already a proper URL (starts with http or /)
+        if (url.startsWith('http') || url.startsWith('/')) {
+            return url;
+        }
+
+        // Add leading slash for relative paths
+        return '/' + url;
+    };
 
     if (!isOpen) return null;
 
@@ -116,6 +138,64 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
                 const details = await actions.order!.capture();
                 console.log("Payment captured successfully:", details);
+
+                // Extract payer information from PayPal response
+                const payerInfo = details.payer;
+                const captureInfo = details.purchase_units?.[0]?.payments?.captures?.[0];
+
+                // Create order in database
+                try {
+                    const orderData = {
+                        userId: user?.id || 'guest', // Use 'guest' for non-logged-in users
+                        paypal_order_id: details.id ?? '', // Ensure string, never undefined
+                        paypal_payer_id: payerInfo?.payer_id ?? '',
+                        paypal_payer_email: payerInfo?.email_address ?? '',
+                        paypal_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : '',
+                        paypal_capture_id: captureInfo?.id ?? '',
+                        paypal_transaction_id: captureInfo?.id ?? '', // Same as capture ID in most cases
+                        total_amount: totalValue,
+                        currency_code: "USD",
+                        order_metadata: {
+                            cart_items: cart.map(item => ({
+                                id: item.id,
+                                name: item.name,
+                                price: item.price,
+                                quantity: item.quantity,
+                                image_url: item.image_url
+                            })),
+                            payment_details: {
+                                paypal_order_id: details.id ?? '',
+                                payment_method: 'paypal',
+                                capture_time: captureInfo?.create_time,
+                                capture_status: captureInfo?.status
+                            },
+                            user_info: user ? {
+                                user_id: user.id,
+                                user_email: user.email,
+                                user_name: user.name
+                            } : {
+                                guest_payer_email: payerInfo?.email_address ?? '',
+                                guest_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : ''
+                            }
+                        },
+                        items: cart.map(item => ({
+                            name: item.name || 'Unknown Item',
+                            price: item.price || 0,
+                            quantity: item.quantity || 1,
+                            paypal_product_id: item.id
+                        }))
+                    };
+
+                    console.log("Creating order in database:", orderData);
+                    const dbOrder = await createOrder(orderData);
+                    console.log("Order created in database:", dbOrder);
+
+                } catch (dbError) {
+                    console.error("Failed to create order in database:", dbError);
+                    // Don't fail the entire transaction if DB creation fails
+                    // The payment was successful, so we should still proceed
+                    alert("Payment successful but there was an issue saving your order details. Please contact support with your transaction ID: " + details.id);
+                }
 
                 // Handle successful payment
                 setPaymentSuccess(true);
@@ -224,13 +304,18 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                         <div className="space-y-4">
                             {cart.map((item) => (
                                 <div key={item.id} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                                    {/* Item Image */}
+                                    {/* Item Image with proper URL handling */}
                                     <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                                         <Image
-                                            src={item.image_url || '/placeholder.png'}
+                                            src={getImageUrl(item.image_url)}
                                             alt={item.name || 'Product'}
                                             fill
                                             className="object-cover"
+                                            onError={(e) => {
+                                                const target = e.target as HTMLImageElement;
+                                                target.src = '/placeholder.png';
+                                            }}
+                                            unoptimized={getImageUrl(item.image_url).startsWith('/uploads/')}
                                         />
                                     </div>
 

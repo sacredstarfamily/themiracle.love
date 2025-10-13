@@ -55,14 +55,48 @@ model Session {
   @@unique([userId, sessionId])
 }
 
+enum FulfillmentStatus {
+  PENDING
+  PROCESSING
+  FULFILLED
+}
+
 model Order {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @db.Timestamp(6)
   updatedAt DateTime @default(now()) @db.Timestamp(6)
   status    String   @default("PENDING")
-  userId    String
-  User      User     @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  userId    String? // Make optional for guest orders
+  User      User?    @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   items     Item[]
+
+  // PayPal order details
+  paypal_order_id       String? // PayPal order ID
+  paypal_payer_id       String? // PayPal payer ID
+  paypal_payer_email    String? // Payer's email from PayPal
+  paypal_payer_name     String? // Payer's name from PayPal
+  paypal_capture_id     String? // PayPal capture transaction ID
+  paypal_transaction_id String? // PayPal transaction ID
+  total_amount          Float? // Total order amount
+  currency_code         String?   @default("USD") // Currency (USD, EUR, etc.)
+  payment_method        String? // Payment method (paypal, card, etc.)
+  payment_status        String? // Payment status (COMPLETED, PENDING, FAILED)
+  payment_date          DateTime? // When payment was completed
+
+  // Fulfillment tracking
+  fulfillment_status FulfillmentStatus @default(PENDING)
+
+  // Additional metadata
+  order_notes      String? // Any order notes or special instructions
+  shipping_address Json? // Shipping address if physical goods
+  billing_address  Json? // Billing address
+  order_metadata   Json? // Additional order data (cart items, discounts, etc.)
+
+  @@index([paypal_order_id])
+  @@index([paypal_capture_id])
+  @@index([payment_status])
+  @@index([fulfillment_status])
+  @@index([userId, createdAt])
 }
 
 model Item {

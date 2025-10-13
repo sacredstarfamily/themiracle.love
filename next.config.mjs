@@ -15,6 +15,21 @@ const nextConfig = {
   env: {
     PAYPAL_CLIENT_SECRET: process.env.PAYPAL_CLIENT_SECRET
   },
+  // Image optimization settings
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+      {
+        protocol: 'http',
+        hostname: 'localhost',
+      }
+    ],
+    // Allow unoptimized images for uploaded files
+    unoptimized: process.env.NODE_ENV === 'development',
+  },
   // Optimize font loading
   experimental: {
     optimizeCss: true,

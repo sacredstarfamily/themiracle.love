@@ -5,6 +5,25 @@ import { useState } from "react";
 
 export function ItemCard(props: { item: Item }) {
     const [isDeleting, setIsDeleting] = useState(false);
+    const [imageError, setImageError] = useState(false);
+
+    // Fix image URL path
+    const getImageUrl = (url: string) => {
+        if (!url) return '/placeholder.png';
+
+        // Remove /public prefix if it exists
+        if (url.startsWith('/public/')) {
+            return url.replace('/public', '');
+        }
+
+        // If it's already a proper URL (starts with http or /)
+        if (url.startsWith('http') || url.startsWith('/')) {
+            return url;
+        }
+
+        // Add leading slash for relative paths
+        return '/' + url;
+    };
 
     const removeItem = async (id: string) => {
         if (!confirm("Are you sure you want to delete this item? This will also attempt to remove it from PayPal catalog.")) {
@@ -40,11 +59,21 @@ export function ItemCard(props: { item: Item }) {
         }
     }
 
+    const imageUrl = getImageUrl(props.item.img_url);
+
     return (
         <div className="justify-center items-center content-center" key={props.item.id}>
             <div className="justify-center self-center overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md items-center" key={props.item.id}>
                 <div className="relative mx-3 mt-3 flex justify-center items-center p-2 bg-slate-200 overflow-hidden rounded-xl">
-                    <Image className="rounded-t-lg" src={props.item.img_url} alt={props.item.name} width={150} height={150} />
+                    <Image
+                        className="rounded-t-lg"
+                        src={imageError ? '/placeholder.png' : imageUrl}
+                        alt={props.item.name}
+                        width={150}
+                        height={150}
+                        onError={() => setImageError(true)}
+                        unoptimized={imageUrl.startsWith('/uploads/')}
+                    />
                 </div>
                 <div className="items-center justify-center p-2">
                     <h5 className="mb-2 text-xl self-center text-center tracking-tight text-gray-900">{props.item.name}</h5>

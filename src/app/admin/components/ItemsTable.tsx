@@ -19,12 +19,17 @@ export default function ItemsTable() {
     const [filter, setFilter] = useState<'all' | 'synced' | 'local_only' | 'paypal_only'>('all');
 
     useEffect(() => {
-        const isDev = process.env.NODE_ENV === 'development';
         const setImageUrlDev = (item: Item) => {
-            if (isDev && item.img_url.startsWith('/public/')) {
-                item.img_url = item.img_url.slice(7)
+            // Fix image URL paths - remove /public prefix if it exists
+            if (item.img_url.startsWith('/public/')) {
+                item.img_url = item.img_url.replace('/public', '');
+            }
+            // Ensure the path starts with / for Next.js static serving
+            if (!item.img_url.startsWith('/') && !item.img_url.startsWith('http')) {
+                item.img_url = '/' + item.img_url;
             }
         }
+
         const fetchItems = async () => {
             setLoading(true);
             try {
