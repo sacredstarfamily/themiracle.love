@@ -61,6 +61,13 @@ enum FulfillmentStatus {
   FULFILLED
 }
 
+enum PayPalSyncStatus {
+  SYNCED // Item exists in both local DB and PayPal catalog
+  LOCAL_ONLY // Item exists only in local DB
+  PAYPAL_ONLY // Item exists only in PayPal catalog (virtual item)
+  MISSING // Item has PayPal ID but not found in PayPal catalog
+}
+
 model Order {
   id        String   @id @default(cuid())
   createdAt DateTime @default(now()) @db.Timestamp(6)
@@ -100,12 +107,76 @@ model Order {
 }
 
 model Item {
-  id                String  @id @default(cuid())
-  name              String
-  img_url           String
-  price             Float
-  quantity          Int
-  paypal_product_id String? // Add this field
-  Order             Order?  @relation(fields: [orderId], references: [id])
-  orderId           String?
+  id                 String           @id @default(cuid())
+  name               String
+  img_url            String
+  price              Float
+  quantity           Int
+  paypal_product_id  String?          @unique // PayPal product ID for syncing
+  paypal_sync_status PayPalSyncStatus @default(LOCAL_ONLY) // Sync status with PayPal
+  paypal_data        Json? // Store PayPal product metadata
+  paypal_last_sync   DateTime? // Last time synced with PayPal
+  Order              Order?           @relation(fields: [orderId], references: [id])
+  orderId            String?
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+
+  // Enhanced metadata for e-commerce
+  description       String? // Product description
+  category          String? // Product category
+  tags              String[] @default([]) // Product tags for search
+  is_active         Boolean  @default(true) // Whether item is available for sale
+  is_digital        Boolean  @default(true) // Whether item is digital or physical
+  inventory_tracked Boolean  @default(true) // Whether to track inventory
+
+  // SEO and display
+  slug             String? @unique // URL-friendly identifier
+  meta_title       String? // SEO title
+  meta_description String? // SEO description
+
+  // Pricing and inventory management
+  cost_price Float? // Cost price for profit calculations
+  sale_price Float? // Sale price if different from regular price
+  sku        String? @unique // Stock Keeping Unit
+  weight     Float? // Weight for shipping calculations
+  dimensions Json? // Dimensions for shipping
+
+  @@index([paypal_product_id])
+  @@index([paypal_sync_status])
+  @@index([is_active])
+  @@index([category])
+  @@index([slug])
+  @@index([sku])
+  @@index([createdAt])
+}
+
+// Model for tracking PayPal sync operations
+model PayPalSyncLog {
+  id            String   @id @default(cuid())
+  operation     String // CREATE, UPDATE, DELETE, SYNC
+  item_id       String? // Local item ID if applicable
+  paypal_id     String? // PayPal product ID
+  status        String // SUCCESS, ERROR, PENDING
+  error_message String? // Error details if failed
+  sync_data     Json? // Data that was synced
+  createdAt     DateTime @default(now())
+
+  @@index([operation])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Model for managing PayPal catalog metadata
+model PayPalCatalog {
+  id               String    @id @default(cuid())
+  total_products   Int       @default(0)
+  last_sync        DateTime?
+  sync_status      String    @default("NEVER_SYNCED") // SYNCED, SYNCING, ERROR, NEVER_SYNCED
+  sync_errors      Json? // Array of sync errors
+  catalog_metadata Json? // PayPal catalog information
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+
+  @@index([sync_status])
+  @@index([last_sync])
 }

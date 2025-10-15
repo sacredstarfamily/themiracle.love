@@ -19,7 +19,7 @@
     "@fortawesome/react-fontawesome": "^0.2.2",
     "@paypal/paypal-server-sdk": "^0.6.0",
     "@paypal/react-paypal-js": "^8.7.0",
-    "@prisma/client": "^5.22.0",
+    "@prisma/client": "^6.17.1",
     "@radix-ui/react-slot": "^1.2.3",
     "@reown/appkit": "^1.0.7",
     "@reown/appkit-adapter-solana": "^1.0.7",

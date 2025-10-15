@@ -279,28 +279,54 @@ export async function logoutUserAction() {
 
 //Items functions
 export async function getAllItems() {
+  console.log("=== GET ALL ITEMS PROCESS STARTED ===");
+
   try {
     const paypal = new PayPalInterface();
 
+    console.log("Fetching local items and PayPal items...");
+
     // Fetch both local items and PayPal items in parallel
     const [localItems, paypalResponse] = await Promise.all([
-      prisma.item.findMany(),
+      prisma.item.findMany({
+        orderBy: {
+          createdAt: 'desc'
+        },
+        select: {
+          id: true,
+          name: true,
+          img_url: true,
+          price: true,
+          quantity: true,
+          paypal_product_id: true,
+          orderId: true,
+          paypal_sync_status: true,
+          paypal_data: true,
+          paypal_last_sync: true,
+          createdAt: true,
+          updatedAt: true
+        }
+      }),
       paypal.getItems().catch(error => {
-        console.error("Failed to fetch PayPal items:", error);
-        return { products: [] }; // Return empty array if PayPal fails
+        console.error("PayPal fetch failed:", error);
+        return { products: [] };
       })
     ]);
 
-    console.log("PayPal items response:", paypalResponse);
+    console.log(`Found ${localItems.length} local items`);
+    console.log("Sample local items sync status:", localItems.slice(0, 3).map(i => ({
+      name: i.name,
+      paypal_sync_status: i.paypal_sync_status,
+      paypal_product_id: i.paypal_product_id
+    })));
 
     const paypalItems = Array.isArray(paypalResponse.products) ? paypalResponse.products : [];
+    console.log(`Found ${paypalItems.length} PayPal items`);
 
-    // Create a map of PayPal items by ID for easy lookup
     type PayPalProduct = {
       id: string;
       name?: string;
       image_url?: string;
-      // Add other relevant fields if needed
       [key: string]: unknown;
     };
 
@@ -308,32 +334,81 @@ export async function getAllItems() {
       paypalItems.map((item: PayPalProduct) => [item.id, item])
     );
 
-    // Merge local items with PayPal data
+    // FIXED: Properly respect database sync status
     const mergedItems = localItems.map(localItem => {
-      const paypalItem = localItem.paypal_product_id
-        ? paypalItemsMap.get(localItem.paypal_product_id)
-        : null;
+      console.log(`Processing: ${localItem.name}`, {
+        db_status: localItem.paypal_sync_status,
+        paypal_id: localItem.paypal_product_id,
+        in_paypal_response: localItem.paypal_product_id ? paypalItemsMap.has(localItem.paypal_product_id) : false
+      });
+
+      let paypal_status: 'synced' | 'missing' | 'local_only' | 'paypal_only';
+
+      // Use database sync status as the primary source of truth
+      if (localItem.paypal_sync_status === 'LOCAL_ONLY') {
+        paypal_status = 'local_only';
+        console.log(`✅ ${localItem.name}: DB says LOCAL_ONLY → local_only`);
+      } else if (localItem.paypal_sync_status === 'SYNCED') {
+        paypal_status = 'synced';
+        console.log(`✅ ${localItem.name}: DB says SYNCED → synced`);
+      } else if (localItem.paypal_sync_status === 'PAYPAL_ONLY') {
+        paypal_status = 'paypal_only';
+        console.log(`✅ ${localItem.name}: DB says PAYPAL_ONLY → paypal_only`);
+      } else if (localItem.paypal_sync_status === 'MISSING') {
+        paypal_status = 'missing';
+        console.log(`✅ ${localItem.name}: DB says MISSING → missing`);
+      } else {
+        // Legacy items without proper sync status - determine based on PayPal ID
+        if (!localItem.paypal_product_id) {
+          paypal_status = 'local_only';
+          console.log(`🔄 ${localItem.name}: No sync status + no PayPal ID → local_only`);
+
+          // Update DB to reflect this
+          prisma.item.update({
+            where: { id: localItem.id },
+            data: { paypal_sync_status: 'LOCAL_ONLY' }
+          }).catch(err => console.warn(`Failed to update ${localItem.id}:`, err));
+        } else {
+          // Has PayPal ID but no sync status - check if it exists in PayPal
+          const existsInPayPal = paypalItemsMap.has(localItem.paypal_product_id);
+          paypal_status = existsInPayPal ? 'synced' : 'missing';
+          console.log(`🔄 ${localItem.name}: No sync status + has PayPal ID + exists=${existsInPayPal} → ${paypal_status}`);
+
+          // Update DB to reflect this
+          prisma.item.update({
+            where: { id: localItem.id },
+            data: {
+              paypal_sync_status: existsInPayPal ? 'SYNCED' : 'MISSING',
+              paypal_last_sync: new Date()
+            }
+          }).catch(err => console.warn(`Failed to update ${localItem.id}:`, err));
+        }
+      }
 
       return {
         ...localItem,
-        paypal_data: paypalItem || null,
-        // Add PayPal status
-        paypal_status: paypalItem ? 'synced' as const : (localItem.paypal_product_id ? 'missing' as const : 'local_only' as const)
+        paypal_data: localItem.paypal_product_id ? paypalItemsMap.get(localItem.paypal_product_id) || null : null,
+        paypal_status
       };
     });
 
-    // Find PayPal items that don't exist in local database
+    // Find PayPal items that don't exist in local database (orphaned)
     const orphanedPayPalItems = paypalItems
-      .filter((paypalItem: PayPalProduct) =>
-        !localItems.some(localItem => localItem.paypal_product_id === paypalItem.id)
-      )
+      .filter((paypalItem: PayPalProduct) => {
+        const isOrphaned = !localItems.some(localItem => localItem.paypal_product_id === paypalItem.id);
+        if (isOrphaned) {
+          console.log(`🔍 Orphaned PayPal item: ${paypalItem.name} (${paypalItem.id})`);
+        }
+        return isOrphaned;
+      })
       .map((paypalItem: PayPalProduct) => ({
         id: `paypal_${paypalItem.id}`,
         name: paypalItem.name || 'Unnamed Product',
         img_url: paypalItem.image_url || '/placeholder.png',
-        price: 0, // PayPal catalog doesn't store price in product
+        price: 0,
         quantity: 0,
         paypal_product_id: paypalItem.id,
+        paypal_sync_status: 'PAYPAL_ONLY' as const,
         paypal_data: paypalItem,
         paypal_status: 'paypal_only' as const
       }));
@@ -341,27 +416,59 @@ export async function getAllItems() {
     // Combine all items
     const allItems = [...mergedItems, ...orphanedPayPalItems];
 
-    console.log(`Found ${localItems.length} local items, ${paypalItems.length} PayPal items, ${orphanedPayPalItems.length} orphaned PayPal items`);
+    const finalCounts = {
+      local: localItems.length,
+      paypal: paypalItems.length,
+      orphaned: orphanedPayPalItems.length,
+      total: allItems.length,
+      synced: allItems.filter(i => i.paypal_status === 'synced').length,
+      local_only: allItems.filter(i => i.paypal_status === 'local_only').length,
+      paypal_only: allItems.filter(i => i.paypal_status === 'paypal_only').length,
+      missing: allItems.filter(i => i.paypal_status === 'missing').length
+    };
 
+    console.log("📊 Final item counts:", finalCounts);
+    console.log("🔍 Status verification:");
+    console.log("- SYNCED items:", allItems.filter(i => i.paypal_status === 'synced').map(i => i.name));
+    console.log("- LOCAL_ONLY items:", allItems.filter(i => i.paypal_status === 'local_only').map(i => i.name));
+    console.log("- PAYPAL_ONLY items:", allItems.filter(i => i.paypal_status === 'paypal_only').map(i => i.name));
+    console.log("- MISSING items:", allItems.filter(i => i.paypal_status === 'missing').map(i => i.name));
+
+    console.log("=== GET ALL ITEMS PROCESS COMPLETED ===");
     return allItems;
   } catch (error) {
     console.error("Error in getAllItems:", error);
-    // Fallback to local items only if everything fails
-    const localItems = await prisma.item.findMany();
-    return localItems.map(item => ({
+    console.log("Falling back to local items only...");
+
+    const localItems = await prisma.item.findMany({
+      orderBy: { createdAt: 'desc' }
+    });
+
+    const fallbackItems = localItems.map(item => ({
       ...item,
       paypal_data: null,
-      paypal_status: 'local_only' as const
+      paypal_status: item.paypal_sync_status === 'LOCAL_ONLY' ? 'local_only' as const :
+        item.paypal_sync_status === 'SYNCED' ? 'synced' as const :
+          item.paypal_product_id ? 'missing' as const : 'local_only' as const
     }));
+
+    console.log(`Fallback: returning ${fallbackItems.length} local items`);
+    return fallbackItems;
   }
 }
 
 // Add function to sync PayPal catalog with local database
 export async function syncPayPalCatalog() {
+  console.log("=== SYNC PAYPAL CATALOG PROCESS STARTED ===");
+
   try {
     const paypal = new PayPalInterface();
+    console.log("Fetching PayPal items for sync...");
+
     const paypalResponse = await paypal.getItems();
     const paypalItems = paypalResponse.products || [];
+
+    console.log(`Found ${paypalItems.length} PayPal items to sync`);
 
     const syncResults = {
       updated: 0,
@@ -370,32 +477,44 @@ export async function syncPayPalCatalog() {
     };
 
     for (const paypalItem of paypalItems) {
+      console.log(`Processing PayPal item: ${paypalItem.name} (${paypalItem.id})`);
+
       try {
-        // Check if item exists in local database
         const existingItem = await prisma.item.findFirst({
           where: { paypal_product_id: paypalItem.id }
         });
 
         if (existingItem) {
-          // Update existing item with PayPal data
+          console.log(`Updating existing item: ${existingItem.name}`);
+
           await prisma.item.update({
             where: { id: existingItem.id },
             data: {
               name: paypalItem.name,
               img_url: paypalItem.image_url || existingItem.img_url,
-              // Don't update price/quantity as PayPal catalog doesn't store these
+              paypal_sync_status: 'SYNCED', // Ensure sync status is correct
+              paypal_data: paypalItem as Prisma.InputJsonValue,
+              paypal_last_sync: new Date(),
             }
           });
           syncResults.updated++;
         } else {
-          // Create new item from PayPal data
+          console.log(`Creating new item from PayPal: ${paypalItem.name}`);
+
           await prisma.item.create({
             data: {
               name: paypalItem.name,
               img_url: paypalItem.image_url || '/placeholder.png',
-              price: 0, // Default price, should be updated manually
-              quantity: 0, // Default quantity, should be updated manually
-              paypal_product_id: paypalItem.id
+              price: 0,
+              quantity: 0,
+              paypal_product_id: paypalItem.id,
+              paypal_sync_status: 'PAYPAL_ONLY', // Set correct status for PayPal-only items
+              paypal_data: paypalItem as Prisma.InputJsonValue,
+              paypal_last_sync: new Date(),
+              description: paypalItem.description || `PayPal product: ${paypalItem.name}`,
+              is_active: true,
+              is_digital: true,
+              slug: paypalItem.name?.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || `paypal-${paypalItem.id}`,
             }
           });
           syncResults.created++;
@@ -406,6 +525,29 @@ export async function syncPayPalCatalog() {
       }
     }
 
+    // Update PayPal catalog tracking
+    try {
+      await prisma.payPalCatalog.upsert({
+        where: { id: 'main' },
+        create: {
+          id: 'main',
+          total_products: paypalItems.length,
+          last_sync: new Date(),
+          sync_status: 'SYNCED',
+          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as Prisma.InputJsonValue
+        },
+        update: {
+          total_products: paypalItems.length,
+          last_sync: new Date(),
+          sync_status: syncResults.errors > 0 ? 'ERROR' : 'SYNCED',
+          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as Prisma.InputJsonValue
+        }
+      });
+    } catch (catalogError) {
+      console.warn("PayPal catalog tracking not available - run 'npx prisma db push && npx prisma generate'");
+    }
+
+    console.log("Sync completed with results:", syncResults);
     return syncResults;
   } catch (error) {
     console.error("Error syncing PayPal catalog:", error);

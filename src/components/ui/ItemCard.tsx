@@ -3,7 +3,7 @@ import { Item } from "@/app/admin/components/ItemsTable";
 import Image from "next/image";
 import { useState } from "react";
 
-export function ItemCard(props: { item: Item }) {
+export function ItemCard(props: { item: Item; onDelete?: () => void }) {
     const [isDeleting, setIsDeleting] = useState(false);
     const [imageError, setImageError] = useState(false);
 
@@ -26,44 +26,79 @@ export function ItemCard(props: { item: Item }) {
     };
 
     const removeItem = async (id: string) => {
-        if (!confirm("Are you sure you want to delete this item? This will also attempt to remove it from PayPal catalog.")) {
+        // Check if this is a PayPal-only item
+        const isPayPalOnly = id.startsWith('paypal_');
+        const confirmMessage = isPayPalOnly
+            ? "Are you sure you want to remove this PayPal-only product? This will mark it as 'no inventory' in PayPal catalog."
+            : "Are you sure you want to delete this item? This will also attempt to remove it from PayPal catalog.";
+
+        if (!confirm(confirmMessage)) {
             return;
         }
 
         setIsDeleting(true);
         try {
+            console.log(`Deleting item ${id}...`);
             const result = await deleteItem(id);
 
-            let message = "Item deleted successfully from local database.";
+            let message: string;
 
-            if (result.paypalDeleted) {
-                if (result.paypalMessage?.includes("already deleted") || result.paypalMessage?.includes("never existed")) {
-                    message += ` PayPal: ${result.paypalMessage}.`;
+            if (isPayPalOnly) {
+                message = "PayPal-only product processed successfully.";
+                if (result.paypalDeleted) {
+                    message += ` ${result.paypalMessage}`;
                 } else {
-                    message += " Also removed from PayPal catalog.";
+                    message += ` However, there was an issue: ${result.paypalMessage}`;
                 }
-            } else if (result.paypalMessage) {
-                message += ` PayPal: ${result.paypalMessage}.`;
+            } else {
+                message = "Item deleted successfully from local database.";
+                if (result.paypalDeleted) {
+                    if (result.paypalMessage?.includes("already deleted") || result.paypalMessage?.includes("never existed")) {
+                        message += ` PayPal: ${result.paypalMessage}.`;
+                    } else if (result.paypalMessage?.includes("no inventory")) {
+                        message += " PayPal: Marked as 'no inventory'.";
+                    } else {
+                        message += " Also updated in PayPal catalog.";
+                    }
+                } else if (result.paypalMessage) {
+                    message += ` PayPal: ${result.paypalMessage}.`;
+                }
             }
 
             alert(message);
 
-            // Don't force refresh - let parent component handle state updates
-            // window.location.reload(); // REMOVED
+            // Call the onDelete callback to refresh the parent list
+            if (props.onDelete) {
+                console.log("Calling onDelete callback to refresh items list");
+                props.onDelete();
+            }
         } catch (error) {
             console.error("Failed to delete item:", error);
             const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
-            alert(`Failed to delete item: ${errorMessage}`);
+
+            const userMessage = isPayPalOnly
+                ? `Failed to process PayPal-only product: ${errorMessage}`
+                : `Failed to delete item: ${errorMessage}`;
+
+            alert(userMessage);
         } finally {
             setIsDeleting(false);
         }
     }
 
     const imageUrl = getImageUrl(props.item.img_url);
+    const isPayPalOnly = props.item.id.startsWith('paypal_');
 
     return (
         <div className="justify-center items-center content-center" key={props.item.id}>
             <div className="justify-center self-center overflow-hidden rounded-lg border border-gray-100 bg-white shadow-md items-center" key={props.item.id}>
+                {/* Add indicator for PayPal-only items */}
+                {isPayPalOnly && (
+                    <div className="bg-purple-100 text-purple-800 text-xs px-2 py-1 text-center border-b">
+                        PayPal-Only Product
+                    </div>
+                )}
+
                 <div className="relative mx-3 mt-3 flex justify-center items-center p-2 bg-slate-200 overflow-hidden rounded-xl">
                     <Image
                         className="rounded-t-lg"
@@ -90,9 +125,12 @@ export function ItemCard(props: { item: Item }) {
                         <button
                             onClick={() => removeItem(props.item.id)}
                             disabled={isDeleting}
-                            className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-red-700 rounded-lg hover:bg-red-800 focus:ring-4 focus:outline-none focus:ring-red-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                            className={`inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${isPayPalOnly
+                                    ? 'bg-purple-700 hover:bg-purple-800 focus:ring-purple-300'
+                                    : 'bg-red-700 hover:bg-red-800 focus:ring-red-300'
+                                }`}
                         >
-                            {isDeleting ? 'Deleting...' : 'Delete'}
+                            {isDeleting ? 'Processing...' : (isPayPalOnly ? 'Remove from PayPal' : 'Delete')}
                             <svg className="w-3.5 h-3.5 ms-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                             </svg>
