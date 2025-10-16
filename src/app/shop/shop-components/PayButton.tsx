@@ -8,7 +8,7 @@ export default function PayButton() {
     const [{ isResolved, isPending, isRejected }] = usePayPalScriptReducer();
     const [isProcessing, setIsProcessing] = useState(false);
     const [buttonsKey, setButtonsKey] = useState(0);
-    const [selectedAmount, setSelectedAmount] = useState(100);
+    const [selectedAmount, setSelectedAmount] = useState<number | null>(null); // Start with null
 
     // Add ref to prevent rapid button remounting
     const buttonsMountedRef = useRef(false);
@@ -38,10 +38,10 @@ export default function PayButton() {
 
     // Track button mounting state
     useEffect(() => {
-        if (isResolved && !buttonsMountedRef.current) {
+        if (isResolved && !buttonsMountedRef.current && selectedAmount !== null) {
             buttonsMountedRef.current = true;
         }
-    }, [isResolved, buttonsKey]);
+    }, [isResolved, buttonsKey, selectedAmount]);
 
     // Show error state if PayPal SDK failed to load
     if (isRejected) {
@@ -83,8 +83,8 @@ export default function PayButton() {
             height: 35,
         },
         createOrder: (data, actions) => {
-            if (isProcessing) {
-                throw new Error("Order creation already in progress");
+            if (isProcessing || selectedAmount === null) {
+                throw new Error("Order creation already in progress or no amount selected");
             }
 
             setIsProcessing(true);
@@ -145,7 +145,7 @@ export default function PayButton() {
                             <button
                                 key={amount}
                                 onClick={() => handleAmountChange(amount)}
-                                disabled={isProcessing || !isResolved}
+                                disabled={isProcessing}
                                 className={`py-2 px-4 rounded-lg border-2 font-semibold transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed ${selectedAmount === amount
                                     ? 'bg-blue-500 text-white border-blue-500 shadow-md transform scale-105'
                                     : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-50 hover:shadow-sm'
@@ -155,44 +155,55 @@ export default function PayButton() {
                             </button>
                         ))}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">
-                        Selected: <span className="font-semibold text-blue-600">${selectedAmount}</span>
-                    </p>
+                    {selectedAmount !== null && (
+                        <p className="text-xs text-gray-500 mt-2">
+                            Selected: <span className="font-semibold text-blue-600">${selectedAmount}</span>
+                        </p>
+                    )}
+                    {selectedAmount === null && (
+                        <p className="text-xs text-gray-400 mt-2">
+                            Please select an amount to continue
+                        </p>
+                    )}
                 </div>
 
-                {/* PayPal Buttons - Enhanced container */}
-                {isResolved && !isPending ? (
-                    <div
-                        ref={containerRef}
-                        className="w-full"
-                    >
-                        {buttonsMountedRef.current ? (
-                            <div key={`donation-buttons-${buttonsKey}-${selectedAmount}`}>
-                                <PayPalButtons
-                                    {...buttonStyles}
-                                    forceReRender={[buttonsKey, selectedAmount]}
-                                />
+                {/* PayPal Buttons - Only show after amount is selected */}
+                {selectedAmount !== null && (
+                    <>
+                        {isResolved && !isPending ? (
+                            <div
+                                ref={containerRef}
+                                className="w-full"
+                            >
+                                {buttonsMountedRef.current ? (
+                                    <div key={`donation-buttons-${buttonsKey}-${selectedAmount}`}>
+                                        <PayPalButtons
+                                            {...buttonStyles}
+                                            forceReRender={[buttonsKey, selectedAmount]}
+                                        />
+                                    </div>
+                                ) : (
+                                    <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
+                                        <Spinner />
+                                        <span className="ml-2 text-sm">Loading PayPal buttons...</span>
+                                    </div>
+                                )}
+                                {isProcessing && (
+                                    <div className="mt-3 flex items-center justify-center text-blue-600">
+                                        <Spinner />
+                                        <span className="ml-2 text-sm">Processing your ${selectedAmount} donation...</span>
+                                    </div>
+                                )}
                             </div>
                         ) : (
-                            <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
+                            <div className="flex items-center justify-center py-6">
                                 <Spinner />
-                                <span className="ml-2 text-sm">Loading PayPal buttons...</span>
+                                <span className="ml-2 text-sm">
+                                    {isPending ? 'Loading PayPal donation button...' : 'Initializing PayPal...'}
+                                </span>
                             </div>
                         )}
-                        {isProcessing && (
-                            <div className="mt-3 flex items-center justify-center text-blue-600">
-                                <Spinner />
-                                <span className="ml-2 text-sm">Processing your ${selectedAmount} donation...</span>
-                            </div>
-                        )}
-                    </div>
-                ) : (
-                    <div className="flex items-center justify-center py-6">
-                        <Spinner />
-                        <span className="ml-2 text-sm">
-                            {isPending ? 'Loading PayPal donation button...' : 'Initializing PayPal...'}
-                        </span>
-                    </div>
+                    </>
                 )}
 
                 {/* Additional Info */}
