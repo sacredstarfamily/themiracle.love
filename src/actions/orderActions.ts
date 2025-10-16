@@ -52,6 +52,15 @@ export async function createOrder(orderData: CreateOrderData) {
             return existingOrder;
         }
 
+        // Log the items before creating the order
+        console.log("Creating order with individual items:", orderData.items.map((item, index) => ({
+            index: index + 1,
+            name: item.name,
+            price: item.price,
+            quantity: 2, // Should always be 1 for individual items
+            total: item.price * item.quantity
+        })));
+
         const order = await prisma.order.create({
             data: {
                 userId: orderData.userId === 'guest' ? undefined : orderData.userId,
@@ -64,23 +73,32 @@ export async function createOrder(orderData: CreateOrderData) {
                 total_amount: orderData.total_amount,
                 currency_code: orderData.currency_code || "USD",
                 payment_method: "paypal",
-                payment_status: "COMPLETED", // Only create orders with completed payments
+                payment_status: "COMPLETED",
                 payment_date: new Date(),
-                fulfillment_status: FulfillmentStatus.PENDING, // Now this will work
-                status: "COMPLETED", // Payment completed, awaiting fulfillment
+                fulfillment_status: FulfillmentStatus.PENDING,
+                status: "COMPLETED",
                 order_metadata: orderData.order_metadata === undefined
                     ? undefined
                     : orderData.order_metadata === null
                         ? Prisma.JsonNull
                         : orderData.order_metadata,
                 items: {
-                    create: orderData.items.map(item => ({
-                        name: item.name,
-                        price: item.price,
-                        quantity: item.quantity,
-                        paypal_product_id: item.paypal_product_id,
-                        img_url: "/placeholder.png" // Default image
-                    }))
+                    create: orderData.items.map((item, index) => {
+                        console.log(`Creating individual order item ${index + 1}/${orderData.items.length}: ${item.name} - Quantity: ${item.quantity} - Price: ${item.price}`);
+
+                        // Each item should have quantity = 1 since we're creating separate records
+                        if (item.quantity !== 1) {
+                            console.warn(`Warning: Expected quantity 1 but got ${item.quantity} for item ${item.name} at index ${index}`);
+                        }
+
+                        return {
+                            name: item.name,
+                            price: item.price,
+                            quantity: 1, // Force quantity to 1 since we create separate records
+                            paypal_product_id: item.paypal_product_id,
+                            img_url: "/placeholder.png"
+                        };
+                    })
                 }
             },
             include: {
@@ -96,6 +114,20 @@ export async function createOrder(orderData: CreateOrderData) {
         });
 
         console.log(`Order created successfully: ${order.id} for PayPal order: ${orderData.paypal_order_id}`);
+        console.log(`Total individual order items created: ${order.items.length}`);
+
+        // Group items by name for verification
+        const itemCounts = order.items.reduce((acc, item) => {
+            acc[item.name] = (acc[item.name] || 0) + 1;
+            return acc;
+        }, {} as Record<string, number>);
+
+        console.log("Order items summary by product:", itemCounts);
+
+        // Verify total matches expected
+        const calculatedTotal = order.items.reduce((sum, item) => sum + Number(item.price), 0);
+        console.log(`Database total verification: Expected ${orderData.total_amount}, Calculated ${calculatedTotal}`);
+
         return order;
     } catch (error) {
         console.error("Error creating order:", error);

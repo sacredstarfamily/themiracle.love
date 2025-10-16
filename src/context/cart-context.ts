@@ -2,17 +2,31 @@ import { PayPalProduct } from "@/lib/definitions";
 import { create } from "zustand";
 
 interface CartItem extends PayPalProduct {
-    quantity?: number;
+    cartItemId: string; // Unique ID for each cart item instance
+    quantity: 1; // Always 1 since we're creating separate instances
+}
+
+// Group cart items by product ID for display purposes
+interface DisplayCartItem {
+    productId: string;
+    name: string;
+    price: number;
+    image_url?: string;
+    category?: 'DIGITAL_GOODS' | 'PHYSICAL_GOODS';
+    description?: string;
+    quantity: number; // Total quantity for this product
+    cartItemIds: string[]; // Array of individual cart item IDs
 }
 
 interface CartStore {
     cart: CartItem[];
     addToCart: (product: PayPalProduct) => void;
-    removeFromCart: (productId: string) => void;
-    updateQuantity: (productId: string, quantity: number) => void;
+    removeFromCart: (productId: string, removeAll?: boolean) => void;
+    updateQuantity: (productId: string, newQuantity: number) => void;
     clearCart: () => void;
     getTotalValue: () => number;
     getItemCount: () => number;
+    getDisplayCart: () => DisplayCartItem[];
     isEmpty: () => boolean;
 }
 
@@ -21,37 +35,88 @@ const useCartStore = create<CartStore>((set, get) => ({
 
     addToCart: (product) => {
         set((state) => {
-            const existingItem = state.cart.find(item => item.id === product.id);
-            if (existingItem) {
+            // Always create a new cart item instance with unique ID
+            const cartItemId = `${product.id}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            const newCartItem: CartItem = {
+                ...product,
+                cartItemId,
+                quantity: 1 // Always 1 for individual instances
+            };
+
+            console.log(`Adding new item instance to cart: ${product.name}, cart item ID: ${cartItemId}`);
+
+            return {
+                cart: [...state.cart, newCartItem]
+            };
+        });
+    },
+
+    removeFromCart: (productId, removeAll = false) => {
+        set((state) => {
+            if (removeAll) {
+                // Remove all instances of this product
                 return {
-                    cart: state.cart.map(item =>
-                        item.id === product.id
-                            ? { ...item, quantity: (item.quantity || 1) + 1 }
-                            : item
-                    )
+                    cart: state.cart.filter((cartItem) => cartItem.id !== productId)
                 };
             } else {
-                return {
-                    cart: [...state.cart, { ...product, quantity: 1 }]
-                };
+                // Remove only one instance of this product
+                const itemIndex = state.cart.findIndex((cartItem) => cartItem.id === productId);
+                if (itemIndex >= 0) {
+                    const newCart = [...state.cart];
+                    newCart.splice(itemIndex, 1);
+                    return { cart: newCart };
+                }
+                return state;
             }
         });
     },
 
-    removeFromCart: (productId) => {
-        set((state) => ({
-            cart: state.cart.filter((product) => product.id !== productId),
-        }));
-    },
+    updateQuantity: (productId, newQuantity) => {
+        set((state) => {
+            const currentItems = state.cart.filter(item => item.id === productId);
+            const currentQuantity = currentItems.length;
 
-    updateQuantity: (productId, quantity) => {
-        set((state) => ({
-            cart: state.cart.map(item =>
-                item.id === productId
-                    ? { ...item, quantity: Math.max(0, quantity) }
-                    : item
-            ).filter(item => item.quantity! > 0)
-        }));
+            if (newQuantity <= 0) {
+                // Remove all instances of this product
+                return {
+                    cart: state.cart.filter(item => item.id !== productId)
+                };
+            }
+
+            if (newQuantity === currentQuantity) {
+                // No change needed
+                return state;
+            }
+
+            let newCart = [...state.cart];
+
+            if (newQuantity > currentQuantity) {
+                // Add more instances
+                const itemsToAdd = newQuantity - currentQuantity;
+                const templateItem = currentItems[0]; // Use first item as template
+
+                for (let i = 0; i < itemsToAdd; i++) {
+                    const cartItemId = `${productId}_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+                    newCart.push({
+                        ...templateItem,
+                        cartItemId,
+                        quantity: 1
+                    });
+                }
+            } else {
+                // Remove excess instances
+                const itemsToRemove = currentQuantity - newQuantity;
+                const itemsToKeep = currentItems.slice(0, newQuantity);
+                const itemIdsToKeep = new Set(itemsToKeep.map(item => item.cartItemId));
+
+                newCart = newCart.filter(item =>
+                    item.id !== productId || itemIdsToKeep.has(item.cartItemId)
+                );
+            }
+
+            console.log(`Updated quantity for ${productId}: ${currentQuantity} -> ${newQuantity}`);
+            return { cart: newCart };
+        });
     },
 
     clearCart: () => {
@@ -60,14 +125,38 @@ const useCartStore = create<CartStore>((set, get) => ({
 
     getTotalValue: () => {
         const { cart } = get();
-        return cart.reduce((total, item) => {
-            return total + ((item.price || 0) * (item.quantity || 1));
+        const total = cart.reduce((total, item) => {
+            return total + (item.price || 0); // Each item has quantity 1
         }, 0);
+        return total;
     },
 
     getItemCount: () => {
         const { cart } = get();
-        return cart.reduce((count, item) => count + (item.quantity || 1), 0);
+        return cart.length; // Each item in array counts as 1
+    },
+
+    getDisplayCart: () => {
+        const { cart } = get();
+        const grouped = cart.reduce((acc, item) => {
+            if (!acc[item.id]) {
+                acc[item.id] = {
+                    productId: item.id,
+                    name: item.name,
+                    price: item.price || 0,
+                    image_url: item.image_url,
+                    category: item.category,
+                    description: item.description,
+                    quantity: 0,
+                    cartItemIds: []
+                };
+            }
+            acc[item.id].quantity++;
+            acc[item.id].cartItemIds.push(item.cartItemId);
+            return acc;
+        }, {} as Record<string, DisplayCartItem>);
+
+        return Object.values(grouped);
     },
 
     isEmpty: () => {
@@ -77,3 +166,5 @@ const useCartStore = create<CartStore>((set, get) => ({
 }));
 
 export default useCartStore;
+
+

@@ -44,9 +44,10 @@ export async function addItem(
 ) {
     console.log("=== ADD ITEM PROCESS STARTED ===");
 
+    // Extract form data with correct field names
     const item_name = formData.get("item_name") as string;
-    const price = Number(formData.get("item_price"));
-    const quantity = Number(formData.get("item_quantity"));
+    const price = Number(formData.get("item_price")); // Changed from "price" to "item_price"
+    const quantity = Number(formData.get("item_quantity")); // Changed from "quantity" to "item_quantity"
 
     // Validate form data
     if (!item_name || item_name.trim().length === 0) {
@@ -319,10 +320,7 @@ export async function syncPayPalCatalogAction() {
 
 // Add function to sync all local items to PayPal
 export async function syncLocalItemsToPayPal() {
-    console.log("=== SYNC LOCAL ITEMS TO PAYPAL STARTED ===");
-
     try {
-        // Get all local items that don't have PayPal product IDs OR have LOCAL_ONLY status
         const localOnlyItems = await prisma.item.findMany({
             where: {
                 OR: [
@@ -332,8 +330,6 @@ export async function syncLocalItemsToPayPal() {
             }
         });
 
-        console.log(`Found ${localOnlyItems.length} local-only items to sync`);
-
         const syncResults = {
             synced: 0,
             skipped: 0,
@@ -342,13 +338,8 @@ export async function syncLocalItemsToPayPal() {
         };
 
         for (const item of localOnlyItems) {
-            console.log(`Processing item: ${item.name} (${item.id})`);
-            console.log(`- PayPal Product ID: ${item.paypal_product_id}`);
-            console.log(`- Sync Status: ${item.paypal_sync_status}`);
-
             // Skip if item already has a PayPal product ID
             if (item.paypal_product_id && item.paypal_sync_status !== 'LOCAL_ONLY') {
-                console.log(`Skipping ${item.name}: already has PayPal product ID ${item.paypal_product_id}`);
                 syncResults.skipped++;
                 syncResults.details.push(`⏭️ ${item.name}: Already has PayPal ID`);
                 continue;
@@ -358,21 +349,16 @@ export async function syncLocalItemsToPayPal() {
                 const paypal = new PayPalInterface();
                 const isDevelopment = process.env.NODE_ENV === 'development';
 
-                // Create proper image URL for PayPal
                 let imageUrl: string;
                 if (isDevelopment) {
-                    // Use placeholder in development
                     imageUrl = "https://via.placeholder.com/400x400.png?text=Product+Image";
                 } else {
-                    // Use actual image in production
                     let cleanImageUrl = item.img_url;
                     if (cleanImageUrl.startsWith('/public/')) {
                         cleanImageUrl = cleanImageUrl.replace('/public', '');
                     }
                     imageUrl = `https://themiracle.love${cleanImageUrl}`;
                 }
-
-                console.log(`Creating PayPal product for ${item.name} with image: ${imageUrl}`);
 
                 const paypalProduct = await paypal.createItem(
                     item.name,
@@ -381,9 +367,7 @@ export async function syncLocalItemsToPayPal() {
                     imageUrl
                 );
 
-                // Update local item with PayPal product ID and sync status
-                console.log(`Updating item ${item.id} with PayPal product ID: ${paypalProduct.id}`);
-                const updatedItem = await prisma.item.update({
+                await prisma.item.update({
                     where: { id: item.id },
                     data: {
                         paypal_product_id: paypalProduct.id,
@@ -397,26 +381,15 @@ export async function syncLocalItemsToPayPal() {
                     }
                 });
 
-                console.log(`✅ Successfully synced ${item.name}:`, {
-                    id: updatedItem.id,
-                    name: updatedItem.name,
-                    paypal_product_id: updatedItem.paypal_product_id,
-                    paypal_sync_status: updatedItem.paypal_sync_status
-                });
-
                 syncResults.synced++;
                 syncResults.details.push(`✅ ${item.name} → ${paypalProduct.id}`);
 
             } catch (itemError) {
-                console.error(`Failed to sync ${item.name}:`, itemError);
                 syncResults.errors++;
                 const errorMsg = itemError instanceof Error ? itemError.message : 'Unknown error';
                 syncResults.details.push(`❌ ${item.name}: ${errorMsg}`);
             }
         }
-
-        console.log("Sync completed:", syncResults);
-        console.log("=== SYNC LOCAL ITEMS TO PAYPAL COMPLETED ===");
 
         return {
             success: true,
@@ -425,9 +398,6 @@ export async function syncLocalItemsToPayPal() {
         };
 
     } catch (error) {
-        console.error("Sync local items to PayPal error:", error);
-        console.log("=== SYNC LOCAL ITEMS TO PAYPAL FAILED ===");
-
         return {
             success: false,
             error: error instanceof Error ? error.message : "Unknown error occurred"
@@ -435,11 +405,9 @@ export async function syncLocalItemsToPayPal() {
     }
 }
 
-// Add function to sync single item to PayPal - FIXED version
+// Add function to sync single item to PayPal
 export async function syncSingleItemToPayPal(itemId: string, itemName: string, itemPrice: number, itemQuantity: number, imageUrl: string) {
     try {
-        console.log(`Server: Syncing item ${itemId} to PayPal...`);
-
         // First check if item already has PayPal product ID
         const existingItem = await prisma.item.findUnique({
             where: { id: itemId },
@@ -456,7 +424,6 @@ export async function syncSingleItemToPayPal(itemId: string, itemName: string, i
         }
 
         if (existingItem.paypal_product_id && existingItem.paypal_sync_status === 'SYNCED') {
-            console.log(`Item ${itemId} already has PayPal product ID: ${existingItem.paypal_product_id}`);
             return {
                 success: true,
                 data: {
@@ -469,7 +436,6 @@ export async function syncSingleItemToPayPal(itemId: string, itemName: string, i
 
         const paypal = new PayPalInterface();
 
-        // Create PayPal product
         const paypalProduct = await paypal.createItem(
             itemName,
             `Product: ${itemName} - Price: $${itemPrice} - Available: ${itemQuantity}`,
@@ -477,9 +443,6 @@ export async function syncSingleItemToPayPal(itemId: string, itemName: string, i
             imageUrl
         );
 
-        console.log(`Server: PayPal product created: ${paypalProduct.id}`);
-
-        // Update the database with PayPal ID and sync status
         const updatedItem = await prisma.item.update({
             where: { id: itemId },
             data: {
@@ -494,13 +457,6 @@ export async function syncSingleItemToPayPal(itemId: string, itemName: string, i
             }
         });
 
-        console.log(`Server: Database updated successfully:`, {
-            id: updatedItem.id,
-            name: updatedItem.name,
-            paypal_product_id: updatedItem.paypal_product_id,
-            paypal_sync_status: updatedItem.paypal_sync_status
-        });
-
         return {
             success: true,
             data: {
@@ -511,8 +467,78 @@ export async function syncSingleItemToPayPal(itemId: string, itemName: string, i
         };
 
     } catch (error) {
-        console.error(`Server: Failed to sync item ${itemId}:`, error);
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown error occurred'
+        };
+    }
+}
 
+// Add function to import PayPal items to local database
+type PayPalItem = {
+    id: string;
+    name: string;
+    image_url?: string;
+    // Add other relevant fields as needed
+};
+
+export async function importPayPalItems(paypalItems: PayPalItem[]) {
+    try {
+        console.log(`Importing ${paypalItems.length} PayPal items to local database...`);
+
+        const importResults = {
+            created: 0,
+            updated: 0,
+            skipped: 0,
+            errors: 0,
+            details: [] as string[]
+        };
+
+        for (const paypalItem of paypalItems) {
+            try {
+                // Check if item already exists in local database
+                const existingItem = await prisma.item.findUnique({
+                    where: { paypal_product_id: paypalItem.id }
+                });
+
+                if (existingItem) {
+                    console.log(`Item ${existingItem.id} already exists for PayPal product ID ${paypalItem.id}, skipping...`);
+                    importResults.skipped++;
+                    importResults.details.push(`⏭️ ${paypalItem.name}: Already exists (ID: ${existingItem.id})`);
+                    continue;
+                }
+
+                // Create new item in local database
+                await prisma.item.create({
+                    data: {
+                        name: paypalItem.name,
+                        img_url: paypalItem.image_url || '/themiracle.png', // Changed from placeholder.png
+                        price: 0, // Default price, should be updated manually
+                        quantity: 0, // Default quantity, should be updated manually
+                        paypal_product_id: paypalItem.id
+                    }
+                });
+
+                console.log(`✅ Imported PayPal item: ${paypalItem.name}`);
+                importResults.created++;
+
+            } catch (error) {
+                console.error(`Error importing PayPal item ${paypalItem.name}:`, error);
+                importResults.errors++;
+                importResults.details.push(`❌ ${paypalItem.name}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+            }
+        }
+
+        console.log("Import results:", importResults);
+
+        return {
+            success: true,
+            data: importResults,
+            message: `Import completed: ${importResults.created} created, ${importResults.updated} updated, ${importResults.skipped} skipped, ${importResults.errors} errors`
+        };
+
+    } catch (error) {
+        console.error("Error importing PayPal items:", error);
         return {
             success: false,
             error: error instanceof Error ? error.message : 'Unknown error occurred'

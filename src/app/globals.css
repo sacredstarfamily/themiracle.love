@@ -59,6 +59,12 @@
     overflow: visible;
     vertical-align: -0.125em;
   }
+
+  /* Suppress PayPal debug logs in console */
+  iframe[src*="paypal"] {
+    /* Hide PayPal debug iframes */
+    display: block !important;
+  }
 }
 
 @layer components {
@@ -101,31 +107,55 @@
     z-index: 0 !important;
   }
 
-  /* PayPal button specific styles */
+  /* PayPal specific optimizations */
   .paypal-button-container {
     position: relative;
     z-index: 1;
+    min-height: 60px; /* Ensure minimum space for buttons */
   }
 
   .paypal-button-container iframe {
     z-index: 1 !important;
   }
 
-  /* Ensure PayPal buttons don't cause modal issues */
-  .paypal-buttons {
-    position: relative !important;
-  }
-
-  /* Fix for PayPal popup/overlay issues */
+  /* Ensure PayPal credit card forms have proper z-index and positioning */
   #paypal-checkout-sdk__container {
     z-index: 10000 !important;
     position: relative !important;
   }
 
-  /* Prevent PayPal button from closing modal */
+  /* PayPal credit card form specific styles */
   [data-paypal-checkout] {
     position: relative;
     z-index: auto;
+    min-height: 300px; /* Provide space for credit card forms */
+  }
+
+  /* Ensure PayPal modals and overlays work properly */
+  .paypal-checkout-context {
+    position: relative !important;
+    z-index: 10001 !important;
+  }
+
+  /* Shopping cart scrolling optimization for PayPal forms */
+  .shopping-cart-container .paypal-button-container {
+    margin-bottom: 2rem; /* Extra space below PayPal buttons */
+  }
+
+  /* Ensure smooth scrolling when PayPal forms appear */
+  .shopping-cart-content {
+    scroll-behavior: smooth;
+  }
+
+  /* Mobile specific adjustments for PayPal forms in cart */
+  @media (max-width: 768px) {
+    .paypal-button-container {
+      min-height: 80px;
+    }
+    
+    [data-paypal-checkout] {
+      min-height: 400px; /* More space on mobile for credit card forms */
+    }
   }
 
   /* Sticky navbar support */

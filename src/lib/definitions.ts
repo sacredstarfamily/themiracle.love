@@ -45,5 +45,18 @@ export interface DeleteItemResult {
 }
 
 export interface CartItem extends PayPalProduct {
-    quantity: number;
+    cartItemId: string; // Unique identifier for each cart item instance
+    quantity: 1; // Always 1 since we use separate instances
+}
+
+// Display version of cart item for UI
+export interface DisplayCartItem {
+    productId: string;
+    name: string;
+    price: number;
+    image_url?: string;
+    category?: 'DIGITAL_GOODS' | 'PHYSICAL_GOODS';
+    description?: string;
+    quantity: number; // Total quantity for this product
+    cartItemIds: string[]; // Array of individual cart item IDs
 }

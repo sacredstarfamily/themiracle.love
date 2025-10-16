@@ -15,21 +15,26 @@ const initialOptions = {
         : process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID!,
     currency: "USD",
     intent: "capture" as const,
-    components: "buttons,marks,messages",
+    components: "buttons,messages",
     enableFunding: "venmo,paylater",
     disableFunding: "",
     dataClientToken: undefined,
     vault: false,
     commit: true,
     locale: "en_US",
-    // Add these options to prevent issues
+    // Disable debug mode to reduce console logging
+    debug: false,
+    // Add these options to prevent zoid destruction
     "disable-funding": "",
     "enable-funding": "venmo,paylater",
 };
 
 export default function PayPalProvider({ children }: PayPalProviderProps) {
     return (
-        <PayPalScriptProvider options={initialOptions}>
+        <PayPalScriptProvider
+            options={initialOptions}
+            deferLoading={false}
+        >
             {children}
         </PayPalScriptProvider>
     );

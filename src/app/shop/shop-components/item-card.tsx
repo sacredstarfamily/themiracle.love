@@ -45,7 +45,7 @@ export function NItemCard({ item }: ItemCardProps) {
         };
 
         addToCart(cartProduct);
-        console.log("Added to cart:", item.name);
+        console.log("Added new item instance to cart:", item.name, "Price:", item.price);
     };
 
     const imageUrl = getImageUrl(item.img_url);

@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // output: 'export',
-  webpack: (config) => {
+  webpack: (config, { dev }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     
     // Optimize FontAwesome imports
@@ -9,6 +9,23 @@ const nextConfig = {
       ...config.resolve.alias,
       '@fortawesome/free-solid-svg-icons': '@fortawesome/free-solid-svg-icons',
     };
+    
+    // Reduce console logging in production
+    if (!dev) {
+      config.optimization = {
+        ...config.optimization,
+        minimize: true,
+      };
+      
+      // Replace console methods in production
+      config.plugins.push(
+        new config.webpack.DefinePlugin({
+          'console.log': '(() => {})',
+          'console.debug': '(() => {})',
+          'console.info': '(() => {})',
+        })
+      );
+    }
     
     return config;
   },
@@ -33,6 +50,12 @@ const nextConfig = {
   // Optimize font loading
   experimental: {
     optimizeCss: true,
+  },
+  // Reduce logging in production
+  logging: {
+    fetches: {
+      fullUrl: process.env.NODE_ENV === 'development'
+    }
   }
 };
 
