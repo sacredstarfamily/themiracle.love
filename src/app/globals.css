@@ -261,6 +261,52 @@
       max-width: 28rem;
     }
   }
+
+  /* Enhanced PayPal zoid error prevention */
+  .paypal-button-container {
+    position: relative;
+    z-index: 1;
+    min-height: 60px;
+    isolation: isolate; /* Prevent zoid conflicts */
+  }
+
+  /* Prevent PayPal button interference */
+  .paypal-button-container iframe {
+    z-index: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  /* Enhanced PayPal component stability */
+  [data-paypal-checkout] {
+    position: relative;
+    z-index: auto;
+    min-height: 300px;
+    isolation: isolate;
+  }
+
+  /* Prevent rapid button destruction/creation */
+  .paypal-buttons-stable {
+    transition: opacity 0.2s ease-in-out;
+  }
+
+  .paypal-buttons-stable.loading {
+    opacity: 0.7;
+    pointer-events: none;
+  }
+
+  /* Zoid container stabilization */
+  #paypal-checkout-sdk__container {
+    z-index: 10000 !important;
+    position: relative !important;
+    isolation: isolate;
+  }
+
+  /* Prevent zoid cleanup conflicts during navigation */
+  .paypal-checkout-context {
+    position: relative !important;
+    z-index: 10001 !important;
+    isolation: isolate;
+  }
 }
 
 @layer utilities {

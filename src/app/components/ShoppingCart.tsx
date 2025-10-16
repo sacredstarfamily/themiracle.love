@@ -24,6 +24,10 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
     const [buttonsKey, setButtonsKey] = useState(0);
     const processingRef = useRef(false);
 
+    // Add ref to track PayPal button container
+    const paypalContainerRef = useRef<HTMLDivElement>(null);
+    const buttonsMountedRef = useRef(false);
+
     const {
         cart,
         removeFromCart,
@@ -46,11 +50,23 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
             setPaymentError(null);
             setPaymentSuccess(false);
             processingRef.current = false;
+            buttonsMountedRef.current = false;
         } else {
-            // Force new PayPal buttons when cart reopens
-            setButtonsKey(prev => prev + 1);
+            // Delay button key update to prevent rapid remounting
+            const timeoutId = setTimeout(() => {
+                setButtonsKey(prev => prev + 1);
+                buttonsMountedRef.current = false;
+            }, 100);
+            return () => clearTimeout(timeoutId);
         }
     }, [isOpen]);
+
+    // Prevent rapid button remounting
+    useEffect(() => {
+        if (isResolved && !buttonsMountedRef.current) {
+            buttonsMountedRef.current = true;
+        }
+    }, [isResolved, buttonsKey]);
 
     // Fix image URL path function
     const getImageUrl = (url: string | undefined) => {
@@ -255,11 +271,15 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
             setPaymentError("PayPal encountered an error. Please try again or use a different payment method.");
             processingRef.current = false;
             setIsProcessing(false);
-            setButtonsKey(prev => prev + 1);
+
+            // Don't immediately regenerate buttons on error to prevent zoid conflicts
+            setTimeout(() => {
+                setButtonsKey(prev => prev + 1);
+            }, 1000);
+
             alert("There was an error with PayPal. Please try again or contact support if the problem persists.");
         },
         onCancel: () => {
-            // Reduced logging
             console.log("Payment cancelled");
             processingRef.current = false;
             setIsProcessing(false);
@@ -434,15 +454,21 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                 Clear Cart
                             </button>
 
-                            {/* PayPal Buttons - Now in scrollable area */}
-                            <div className="paypal-button-container relative">
+                            {/* PayPal Buttons - Enhanced container */}
+                            <div
+                                ref={paypalContainerRef}
+                                className="paypal-button-container relative"
+                            >
                                 {paymentError && (
                                     <button
                                         onClick={() => {
                                             setPaymentError(null);
                                             processingRef.current = false;
                                             setIsProcessing(false);
-                                            setButtonsKey(prev => prev + 1); // Force new buttons
+                                            // Delay button regeneration to prevent zoid conflicts
+                                            setTimeout(() => {
+                                                setButtonsKey(prev => prev + 1);
+                                            }, 500);
                                         }}
                                         className="w-full mb-2 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                                     >
@@ -450,9 +476,12 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                     </button>
                                 )}
 
-                                {isResolved && !isPending && !paymentSuccess ? (
-                                    <div key={buttonsKey}>
-                                        <PayPalButtons {...paypalButtonOptions} />
+                                {isResolved && !isPending && !paymentSuccess && buttonsMountedRef.current ? (
+                                    <div key={`paypal-buttons-${buttonsKey}`}>
+                                        <PayPalButtons
+                                            {...paypalButtonOptions}
+                                            forceReRender={[buttonsKey, totalValue]}
+                                        />
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-center py-6 bg-gray-50 rounded">

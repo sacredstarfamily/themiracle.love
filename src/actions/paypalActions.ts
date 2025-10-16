@@ -5,11 +5,15 @@ import qs from 'qs';
 const Env = process.env.NODE_ENV;
 const LIVE_URL = "https://api.paypal.com";
 const SANDBOX_API = "https://api-m.sandbox.paypal.com"
+
+// Force sandbox for development, live for production
 let API_URL: string;
-if (Env === 'production') {
-    API_URL = LIVE_URL
+if (Env === 'development') {
+    API_URL = SANDBOX_API;
+    console.log('PayPal API: Using sandbox environment');
 } else {
-    API_URL = SANDBOX_API
+    API_URL = LIVE_URL;
+    console.log('PayPal API: Using live environment');
 }
 
 export interface PayPalOrderRequest {
@@ -79,6 +83,8 @@ export class PayPalInterface {
                 'Accept-Language': 'en_US',
                 'content-type': 'application/x-www-form-urlencoded',
             }
+
+            // Use the correct credentials based on environment
             const Eauth = Env === 'development' ? {
                 'username': process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_ID || '',
                 'password': process.env.NEXT_PUBLIC_SANDBOX_PAYPAL_SECRET || ''
@@ -86,6 +92,9 @@ export class PayPalInterface {
                 'username': process.env.NEXT_PUBLIC_LIVE_PAYPAL_ID || '',
                 'password': process.env.PAYPAL_CLIENT_SECRET || ''
             };
+
+            console.log('PayPal Auth: Using', Env === 'development' ? 'sandbox' : 'live', 'credentials');
+            console.log('PayPal Username:', Eauth.username ? `${Eauth.username.substring(0, 10)}...` : 'Missing');
 
             try {
                 const resp = await axios.post(url,
