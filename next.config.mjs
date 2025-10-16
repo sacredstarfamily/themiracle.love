@@ -1,7 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   // output: 'export',
-  webpack: (config, { dev }) => {
+  webpack: (config, { dev, webpack }) => {
     config.externals.push("pino-pretty", "lokijs", "encoding");
     
     // Optimize FontAwesome imports
@@ -17,9 +17,9 @@ const nextConfig = {
         minimize: true,
       };
       
-      // Replace console methods in production
+      // Replace console methods in production using webpack parameter
       config.plugins.push(
-        new config.webpack.DefinePlugin({
+        new webpack.DefinePlugin({
           'console.log': '(() => {})',
           'console.debug': '(() => {})',
           'console.info': '(() => {})',

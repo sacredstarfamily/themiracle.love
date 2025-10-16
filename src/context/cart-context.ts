@@ -105,7 +105,6 @@ const useCartStore = create<CartStore>((set, get) => ({
                 }
             } else {
                 // Remove excess instances
-                const itemsToRemove = currentQuantity - newQuantity;
                 const itemsToKeep = currentItems.slice(0, newQuantity);
                 const itemIdsToKeep = new Set(itemsToKeep.map(item => item.cartItemId));
 
