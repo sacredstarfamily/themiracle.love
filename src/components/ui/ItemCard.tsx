@@ -1,5 +1,5 @@
 import { deleteItem } from "@/actions/adminActions";
-import { Item } from "@/app/admin/components/ItemsTable";
+import { Item } from "@/lib/definitions"; // Updated import
 import Image from "next/image";
 import { useState } from "react";
 
@@ -99,6 +99,24 @@ export function ItemCard(props: { item: Item; onDelete?: () => void }) {
                     </div>
                 )}
 
+                {/* Add status indicators */}
+                <div className="flex justify-between items-center p-2 bg-gray-50 border-b text-xs">
+                    <div className="flex items-center space-x-2">
+                        {props.item.is_digital && (
+                            <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">Digital</span>
+                        )}
+                        {!props.item.is_active && (
+                            <span className="bg-red-100 text-red-800 px-2 py-1 rounded">Inactive</span>
+                        )}
+                        {!props.item.inventory_tracked && (
+                            <span className="bg-yellow-100 text-yellow-800 px-2 py-1 rounded">No Tracking</span>
+                        )}
+                    </div>
+                    <div className="text-gray-500">
+                        {props.item.paypal_sync_status || 'No Sync'}
+                    </div>
+                </div>
+
                 <div className="relative mx-3 mt-3 flex justify-center items-center p-2 bg-slate-200 overflow-hidden rounded-xl">
                     <Image
                         className="rounded-t-lg"
@@ -112,9 +130,21 @@ export function ItemCard(props: { item: Item; onDelete?: () => void }) {
                 </div>
                 <div className="items-center justify-center p-2">
                     <h5 className="mb-2 text-xl self-center text-center tracking-tight text-gray-900">{props.item.name}</h5>
-                    <p className="mb-3 font-normal text-gray-700">
-                        Price: ${props.item.price} | Quantity: {props.item.quantity}
-                    </p>
+
+                    {/* Enhanced item details */}
+                    <div className="mb-3 space-y-1 text-sm text-gray-700">
+                        <p>Price: ${props.item.price}</p>
+                        <p>Quantity: {props.item.quantity}</p>
+                        {props.item.description && (
+                            <p className="text-xs text-gray-600 truncate" title={props.item.description}>
+                                {props.item.description}
+                            </p>
+                        )}
+                        {props.item.slug && (
+                            <p className="text-xs text-gray-500">Slug: {props.item.slug}</p>
+                        )}
+                    </div>
+
                     <div className="flex justify-center gap-2">
                         <a href="#" className="inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white bg-blue-700 rounded-lg hover:bg-blue-800 focus:ring-4 focus:outline-none focus:ring-blue-300">
                             View Details
@@ -126,8 +156,8 @@ export function ItemCard(props: { item: Item; onDelete?: () => void }) {
                             onClick={() => removeItem(props.item.id)}
                             disabled={isDeleting}
                             className={`inline-flex items-center px-3 py-2 text-sm font-medium text-center text-white rounded-lg focus:ring-4 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${isPayPalOnly
-                                    ? 'bg-purple-700 hover:bg-purple-800 focus:ring-purple-300'
-                                    : 'bg-red-700 hover:bg-red-800 focus:ring-red-300'
+                                ? 'bg-purple-700 hover:bg-purple-800 focus:ring-purple-300'
+                                : 'bg-red-700 hover:bg-red-800 focus:ring-red-300'
                                 }`}
                         >
                             {isDeleting ? 'Processing...' : (isPayPalOnly ? 'Remove from PayPal' : 'Delete')}

@@ -184,21 +184,21 @@ export default function PayButton() {
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
-                                        <Spinner />
-                                        <span className="ml-2 text-sm">Loading PayPal buttons...</span>
+                                        <Spinner size="lg" />
+                                        <span className="ml-4 text-sm">Loading PayPal buttons...</span>
                                     </div>
                                 )}
                                 {isProcessing && (
                                     <div className="mt-3 flex items-center justify-center text-blue-600">
-                                        <Spinner />
-                                        <span className="ml-2 text-sm">Processing your ${selectedAmount} donation...</span>
+                                        <Spinner size="md" />
+                                        <span className="ml-4 text-sm">Processing your ${selectedAmount} donation...</span>
                                     </div>
                                 )}
                             </div>
                         ) : (
                             <div className="flex items-center justify-center py-6">
-                                <Spinner />
-                                <span className="ml-2 text-sm">
+                                <Spinner size="lg" />
+                                <span className="ml-4 text-sm">
                                     {isPending ? 'Loading PayPal donation button...' : 'Initializing PayPal...'}
                                 </span>
                             </div>

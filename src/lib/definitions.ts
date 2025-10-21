@@ -2,6 +2,7 @@ export type SessionPayload = {
     email: string;
     expiresAt: Date;
 }
+
 export interface User {
     id: string;
     name: string | null;
@@ -28,18 +29,21 @@ export interface Item {
     img_url: string;
     price: number;
     quantity: number;
+    description?: string | null;
+    slug?: string | null;
+    is_active?: boolean;
+    is_digital?: boolean;
+    inventory_tracked?: boolean;
     paypal_product_id?: string | null;
+    paypal_sync_status?: string | null;
     paypal_data?: unknown;
+    paypal_last_sync?: Date | null;
+    createdAt?: Date;
+    updatedAt?: Date;
     paypal_status?: 'synced' | 'missing' | 'local_only' | 'paypal_only';
 }
 
-export interface DeleteItemResult {
-    id: string;
-    name: string;
-    img_url: string;
-    price: number;
-    quantity: number;
-    paypal_product_id?: string | null;
+export interface DeleteItemResult extends Item {
     paypalDeleted: boolean;
     paypalMessage: string;
 }

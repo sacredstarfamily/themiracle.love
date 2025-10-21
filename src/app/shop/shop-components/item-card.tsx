@@ -1,9 +1,9 @@
 "use client"
 
-import { Item } from "@/app/admin/components/ItemsTable";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import useCartStore from "@/context/cart-context";
+import { Item } from "@/lib/definitions"; // Updated import
 import Image from "next/image";
 import { useState } from "react";
 
@@ -38,10 +38,10 @@ export function NItemCard({ item }: ItemCardProps) {
         const cartProduct = {
             id: item.id,
             name: item.name,
-            description: `${item.name} - Available: ${item.quantity}`,
+            description: item.description || `${item.name} - Available: ${item.quantity}`,
             image_url: item.img_url,
             price: item.price,
-            category: 'DIGITAL_GOODS' as const,
+            category: (item.is_digital ? 'DIGITAL_GOODS' : 'PHYSICAL_GOODS') as 'DIGITAL_GOODS' | 'PHYSICAL_GOODS',
         };
 
         addToCart(cartProduct);
@@ -61,16 +61,16 @@ export function NItemCard({ item }: ItemCardProps) {
                     onError={() => setImageError(true)}
                     unoptimized={imageUrl.startsWith('/uploads/')}
                 />
-                {item.paypal_status && (
-                    <div className="absolute top-2 right-2">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${item.paypal_status === 'synced' ? 'bg-green-100 text-green-800' :
-                            item.paypal_status === 'local_only' ? 'bg-yellow-100 text-yellow-800' :
-                                'bg-gray-100 text-gray-800'
-                            }`}>
-                            {item.paypal_status === 'synced' ? 'In Stock' : 'Local Only'}
-                        </span>
-                    </div>
-                )}
+
+                {/* Item status indicators */}
+                <div className="absolute top-2 left-2 flex flex-col space-y-1">
+                    {item.is_digital && (
+                        <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded">Digital</span>
+                    )}
+                    {!item.is_active && (
+                        <span className="bg-red-500 text-white text-xs px-2 py-1 rounded">Inactive</span>
+                    )}
+                </div>
             </div>
 
             <CardHeader className="space-y-2">
@@ -80,22 +80,28 @@ export function NItemCard({ item }: ItemCardProps) {
 
             <CardContent>
                 <CardDescription className="text-sm leading-relaxed text-pretty">
-                    Available quantity: {item.quantity}
-                    {item.paypal_status === 'synced' && (
-                        <span className="block mt-1 text-xs text-green-600">
-                            ✓ Synced with PayPal
-                        </span>
-                    )}
+                    {item.description || 'No description available.'}
                 </CardDescription>
+
+                {/* Additional item details */}
+                <div className="mt-2 text-xs text-gray-500 space-y-1">
+                    {item.slug && <p>Product Code: {item.slug}</p>}
+                    <p>Available: {item.inventory_tracked ? `${item.quantity} units` : 'Unlimited'}</p>
+                    {item.createdAt && (
+                        <p>Added: {new Date(item.createdAt).toLocaleDateString()}</p>
+                    )}
+                </div>
             </CardContent>
 
             <CardFooter>
                 <Button
                     onClick={handleAddToCart}
-                    disabled={item.quantity === 0}
+                    disabled={(item.inventory_tracked && item.quantity === 0) || !item.is_active}
                     className="w-full bg-purple-600 hover:bg-purple-700 text-white font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {item.quantity === 0 ? 'Out of Stock' : 'Add to Cart'}
+                    {!item.is_active ? 'Unavailable' :
+                        (item.inventory_tracked && item.quantity === 0) ? 'Out of Stock' :
+                            'Add to Cart'}
                 </Button>
             </CardFooter>
         </Card>

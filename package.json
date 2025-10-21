@@ -8,7 +8,8 @@
     "push-db": "npx prisma db push --force-reset",
     "migrate-db": "npx prisma migrate dev",
     "generate": "npx prisma generate",
-    "dev": "next dev --turbo",
+    "dev": "next dev",
+    "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
@@ -74,3 +75,4 @@
     "typescript": "^5"
   }
 }
+

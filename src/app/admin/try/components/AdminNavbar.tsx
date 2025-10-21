@@ -21,7 +21,15 @@ function AdminNavbar({ toggleView }: AdminNavBarProps) {
     }, []);
 
     return (
-        <>
+        <div className="bg-white shadow-sm border-b sticky top-16 z-40">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="flex items-center justify-between h-12">
+                    <h1 className="text-lg font-semibold text-gray-900">Admin Dashboard</h1>
+                    <div className="text-sm text-gray-500">
+                        Manage your application
+                    </div>
+                </div>
+            </div>
             <div className="hidden relative py-0 sm:flex flex-col justify-center">
                 <AdminNavDesk toggleView={handleViewChange} />
             </div>
@@ -33,7 +41,7 @@ function AdminNavbar({ toggleView }: AdminNavBarProps) {
                     onClose={handleDrawerToggle}
                 />
             </div>
-        </>
+        </div>
     )
 }
 

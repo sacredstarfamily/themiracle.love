@@ -1,15 +1,15 @@
 "use client";
-import Navbar from "./components/Navbar";
-import Footer from "./components/Footer";
 import { ThemiracleIcon } from '../components/icons';
+import Footer from "./components/Footer";
+import Navbar from "./components/Navbar";
 
 export default function Home() {
 
   return (
     <>
       <Navbar />
-      <main className="flex flex-col items-center justify-center h-screen text-center z-1">
-        <h1 className="text-4xl sm:text-5xl self-center font-[family-name:var(--font-cheri)]">
+      <main className="flex flex-col items-center justify-center h-screen text-center z-1 pt-16">
+        <h1 className="text-4xl sm:text-5xl self-center font-cheri">
           Welcome to themiracle.love
         </h1>
         <p className="text-lg text-center self-center sm:text-2xl">
@@ -18,8 +18,8 @@ export default function Home() {
         </p>
 
         <div className="border-2 border-black p-0  m-auto rounded-lg">
-          <h1 className="text-4xl">themiracle token</h1>
-          <p>available at <a href="https://pump.fun/coin/DakAndRzPaLjUSZYSapvZFKWuGoZXu84UUopWFfypump"><span className="font-[family-name:var(--font-cheri)] text-blue-600 underline cursor-pointer">pump.fun</span></a></p>
+          <h1 className="text-4xl font-cheri">themiracle token</h1>
+          <p>available at <a href="https://pump.fun/coin/DakAndRzPaLjUSZYSapvZFKWuGoZXu84UUopWFfypump"><span className="text-blue-600 underline cursor-pointer font-cheri">pump.fun</span></a></p>
         </div>
       </main>
       <Footer />

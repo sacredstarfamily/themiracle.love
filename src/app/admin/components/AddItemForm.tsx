@@ -1,253 +1,287 @@
-'use client';
+"use client";
+
 import { addItem } from "@/actions/adminActions";
-import Image from "next/image";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useFormState, useFormStatus } from "react-dom";
 
-export default function AddItemForm() {
-    const INITIAL_STATE = {
-        data: "",
-    }
+const INITIAL_STATE = {
+    data: "", // Changed from null to empty string to match expected type
+};
+
+function SubmitButton({ isSubmitting }: { isSubmitting: boolean }) {
     const { pending } = useFormStatus();
-    const [formState, formAction] = useFormState(addItem, INITIAL_STATE);
-    const [showForm, setShowForm] = useState(false);
-    const [selectedImage, setSelectedImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-    const handleImageChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        const file = event.target.files?.[0];
-        if (file) {
-            setSelectedImage(file);
-
-            // Create preview URL
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                setImagePreview(e.target?.result as string);
-            };
-            reader.readAsDataURL(file);
-        }
-    };
-
-    const clearImage = () => {
-        setSelectedImage(null);
-        setImagePreview(null);
-        // Reset the file input
-        const fileInput = document.getElementById('item_image') as HTMLInputElement;
-        if (fileInput) {
-            fileInput.value = '';
-        }
-    };
-
-    useEffect(() => {
-        if (formState?.data) {
-            console.log("Form state received:", formState.data);
-
-            if (formState.data.includes("successfully")) {
-                alert(formState.data);
-                setShowForm(false);
-                // Clear form state
-                setSelectedImage(null);
-                setImagePreview(null);
-            } else if (formState.data.includes("PayPal catalog creation failed")) {
-                alert("Item created in database, but PayPal catalog creation failed. This is normal in sandbox mode.");
-                setShowForm(false);
-                setSelectedImage(null);
-                setImagePreview(null);
-            } else if (formState.data.includes("Failed")) {
-                alert("Error: " + formState.data);
-            }
-        }
-    }, [formState]);
+    const isLoading = pending || isSubmitting;
 
     return (
-        <div className="mx-3 mt-5 border-2 p-4">
-            <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Add New Item</h2>
-                <button
-                    onClick={() => setShowForm(!showForm)}
-                    className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-                >
-                    {showForm ? 'Cancel' : 'Add Item'}
-                </button>
-            </div>
-            {showForm && (
-                <div className="bg-gray-50 p-4 rounded-lg">
-                    <form action={formAction} className="space-y-4">
-                        {/* Item Name */}
-                        <div className="relative">
-                            <input
-                                type="text"
-                                name="item_name"
-                                id="item_name"
-                                className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-500 placeholder:font-normal"
-                                placeholder="Enter item name"
-                                required
-                            />
-                            <label htmlFor="item_name" className="absolute left-4 -top-2 bg-white px-2 text-sm text-gray-600 font-medium">
-                                Item Name
-                            </label>
+        <button
+            type="submit"
+            disabled={isLoading}
+            className={`px-6 py-2 rounded-lg font-medium transition-all duration-200 ${isLoading
+                ? 'bg-gray-400 cursor-not-allowed'
+                : 'bg-blue-600 hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2'
+                } text-white disabled:opacity-75`}
+        >
+            {isLoading ? (
+                <div className="flex items-center space-x-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Creating & Syncing...</span>
+                </div>
+            ) : (
+                'Create Item'
+            )}
+        </button>
+    );
+}
+
+interface AddItemFormProps {
+    onItemAdded?: () => Promise<void> | void;
+}
+
+export default function AddItemForm({ onItemAdded }: AddItemFormProps = {}) {
+    const [formState, formAction] = useFormState(addItem, INITIAL_STATE);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [lastSubmissionResult, setLastSubmissionResult] = useState<string>("");
+
+    const handleSubmit = async (formData: FormData) => {
+        setIsSubmitting(true);
+        setLastSubmissionResult("");
+
+        try {
+            console.log('🔄 Starting form submission...');
+            formAction(formData);
+        } finally {
+            // Track the result and call callback
+            setTimeout(async () => {
+                setIsSubmitting(false);
+
+                // Check if submission was successful
+                const isSuccess = formState?.data && (
+                    formState.data.includes('✅') ||
+                    formState.data.includes('created successfully')
+                );
+
+                if (isSuccess && onItemAdded) {
+                    console.log('🔄 Item creation successful, calling callback...');
+                    try {
+                        await onItemAdded();
+                    } catch (error) {
+                        console.error('Error in onItemAdded callback:', error);
+                    }
+                }
+
+                setLastSubmissionResult(formState?.data || "");
+            }, 1000);
+        }
+    };
+
+    // Use the last submission result if formState.data is empty
+    const displayMessage = formState?.data || lastSubmissionResult;
+
+    return (
+        <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+            <h2 className="text-xl font-semibold mb-4">Add New Item</h2>
+
+            {/* Enhanced status display */}
+            {displayMessage && (
+                <div className={`mb-4 p-4 rounded-lg border ${displayMessage.includes('✅') && displayMessage.includes('SYNCED')
+                    ? 'bg-green-50 border-green-200 text-green-800'
+                    : displayMessage.includes('⚠️')
+                        ? 'bg-yellow-50 border-yellow-200 text-yellow-800'
+                        : displayMessage.includes('❌')
+                            ? 'bg-red-50 border-red-200 text-red-800'
+                            : 'bg-blue-50 border-blue-200 text-blue-800'
+                    }`}>
+                    <div className="flex justify-between items-start">
+                        <div className="flex-1 whitespace-pre-line text-sm font-medium">
+                            {displayMessage}
                         </div>
-
-                        {/* Price and Quantity Grid */}
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    step="0.01"
-                                    name="item_price"
-                                    id="item_price"
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-500 placeholder:font-normal"
-                                    placeholder="0.00"
-                                    required
-                                />
-                                <label htmlFor="item_price" className="absolute left-4 -top-2 bg-white px-2 text-sm text-gray-600 font-medium">
-                                    Price ($)
-                                </label>
-                            </div>
-
-                            <div className="relative">
-                                <input
-                                    type="number"
-                                    name="item_quantity"
-                                    id="item_quantity"
-                                    className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg focus:border-blue-500 focus:outline-none transition-colors duration-200 font-medium text-gray-900 placeholder:text-gray-500 placeholder:font-normal"
-                                    placeholder="0"
-                                    required
-                                />
-                                <label htmlFor="item_quantity" className="absolute left-4 -top-2 bg-white px-2 text-sm text-gray-600 font-medium">
-                                    Quantity
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Enhanced Image Upload with Preview */}
-                        <div className="space-y-4">
-                            <label className="block text-sm font-medium text-gray-700">
-                                Product Image
-                            </label>
-
-                            {/* Image Preview */}
-                            {imagePreview && (
-                                <div className="relative inline-block">
-                                    <div className="relative w-32 h-32 border-2 border-gray-300 rounded-lg overflow-hidden">
-                                        <Image
-                                            src={imagePreview}
-                                            alt="Image preview"
-                                            fill
-                                            className="object-cover"
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={clearImage}
-                                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600"
-                                    >
-                                        ×
-                                    </button>
-                                    <div className="mt-2 text-xs text-gray-600 text-center">
-                                        {selectedImage?.name}
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* Upload Area */}
-                            <div className={`border-2 border-dashed rounded-lg p-6 text-center transition-colors duration-200 ${imagePreview ? 'border-green-300 bg-green-50' : 'border-gray-300 hover:border-blue-400'
-                                }`}>
-                                <div className="mb-4">
-                                    {imagePreview ? (
-                                        <svg className="mx-auto h-12 w-12 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
-                                        </svg>
-                                    ) : (
-                                        <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-                                        </svg>
-                                    )}
-                                </div>
-                                <input
-                                    type="file"
-                                    name="item_image"
-                                    id="item_image"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                    required
-                                />
-                                <label htmlFor="item_image" className="cursor-pointer">
-                                    {imagePreview ? (
-                                        <>
-                                            <span className="text-green-600 font-medium">Image selected!</span>
-                                            <p className="text-xs text-gray-500 mt-1">Click to change image</p>
-                                        </>
-                                    ) : (
-                                        <>
-                                            <span className="text-blue-600 font-medium hover:text-blue-500">Click to upload</span>
-                                            <span className="text-gray-500"> or drag and drop</span>
-                                            <p className="text-xs text-gray-400 mt-1">PNG, JPG, GIF up to 10MB</p>
-                                        </>
-                                    )}
-                                </label>
-                            </div>
-                        </div>
-
-                        {/* Error/Success Message */}
-                        {formState?.data && (
-                            <div className={`p-4 rounded-lg ${formState.data.includes('added') || formState.data.includes('successfully') ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'}`}>
-                                <p className={`text-sm ${formState.data.includes('added') || formState.data.includes('successfully') ? 'text-green-700' : 'text-red-700'}`}>
-                                    {formState.data}
-                                </p>
-                            </div>
-                        )}
-
-                        <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded">
-                            <p><strong>PayPal Integration:</strong></p>
-                            <p>• Development: Uses PayPal Sandbox with placeholder images</p>
-                            <p>• Production: Uses PayPal Live with actual uploaded images</p>
-                            <p>• Current: {process.env.NODE_ENV === 'development' ? 'SANDBOX' : 'LIVE'} mode</p>
-                            <p>• Home URL: Always uses https://themiracle.love</p>
-
-                            {imagePreview && process.env.NODE_ENV === 'development' && (
-                                <div className="mt-2 p-2 bg-yellow-100 rounded text-xs">
-                                    <p><strong>Development Note:</strong></p>
-                                    <p>PayPal will use a placeholder image instead of your uploaded image</p>
-                                    <p className="text-gray-500 mt-1">
-                                        Placeholder: https://via.placeholder.com/400x400.png?text=Product+Image
-                                    </p>
-                                </div>
-                            )}
-
-                            {imagePreview && process.env.NODE_ENV === 'production' && (
-                                <div className="mt-2 p-2 bg-green-100 rounded text-xs">
-                                    <p><strong>Production Mode:</strong></p>
-                                    <p>PayPal will use your uploaded image</p>
-                                    <p className="break-all text-gray-500 mt-1">
-                                        Image URL: https://themiracle.love/uploads/{selectedImage?.name}
-                                    </p>
-                                </div>
-                            )}
-                        </div>
-
-                        {/* Submit Button */}
                         <button
-                            type="submit"
-                            disabled={pending || !selectedImage}
-                            className="w-full bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-blue-700 hover:to-indigo-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 transform hover:scale-[1.02] active:scale-[0.98]"
+                            onClick={() => {
+                                setLastSubmissionResult("");
+                                if (formState) formState.data = "";
+                            }}
+                            className="ml-4 text-gray-400 hover:text-gray-600"
+                            aria-label="Dismiss"
                         >
-                            {pending ? (
-                                <div className="flex items-center justify-center">
-                                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    Adding Item...
-                                </div>
-                            ) : (
-                                'Add Item'
-                            )}
+                            ×
                         </button>
-                    </form>
+                    </div>
+                    {displayMessage.includes('LOCAL_ONLY') && (
+                        <div className="mt-2 text-xs">
+                            <p>💡 <strong>Tip:</strong> You can sync this item to PayPal later using the &quot;Sync PayPal → Local&quot; button above.</p>
+                        </div>
+                    )}
                 </div>
             )}
+
+            <form action={handleSubmit} className="space-y-6">
+                {/* Basic Information */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="item_name" className="block text-sm font-medium text-gray-700 mb-1">
+                            Item Name *
+                        </label>
+                        <input
+                            type="text"
+                            id="item_name"
+                            name="item_name"
+                            required
+                            maxLength={127}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter item name"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Maximum 127 characters</p>
+                    </div>
+
+                    <div>
+                        <label htmlFor="item_price" className="block text-sm font-medium text-gray-700 mb-1">
+                            Price (USD) *
+                        </label>
+                        <input
+                            type="number"
+                            id="item_price"
+                            name="item_price"
+                            required
+                            min="0"
+                            step="0.01"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="0.00"
+                        />
+                    </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label htmlFor="item_quantity" className="block text-sm font-medium text-gray-700 mb-1">
+                            Inventory Quantity *
+                        </label>
+                        <input
+                            type="number"
+                            id="item_quantity"
+                            name="item_quantity"
+                            required
+                            min="0"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="0"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Available inventory count</p>
+                    </div>
+
+                    <div>
+                        <label htmlFor="item_image" className="block text-sm font-medium text-gray-700 mb-1">
+                            Product Image *
+                        </label>
+                        <input
+                            type="file"
+                            id="item_image"
+                            name="item_image"
+                            accept="image/*"
+                            required
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Recommended: 400x400px minimum</p>
+                    </div>
+                </div>
+
+                {/* PayPal Product Configuration */}
+                <div className="border-t pt-4">
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">PayPal Product Configuration</h3>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label htmlFor="paypal_type" className="block text-sm font-medium text-gray-700 mb-1">
+                                Product Type *
+                            </label>
+                            <select
+                                id="paypal_type"
+                                name="paypal_type"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="SERVICE">SERVICE - Services (recommended)</option>
+                                <option value="DIGITAL">DIGITAL - Digital goods</option>
+                                <option value="PHYSICAL">PHYSICAL - Physical goods</option>
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">Cannot be changed after PayPal creation</p>
+                        </div>
+
+                        <div>
+                            <label htmlFor="paypal_category" className="block text-sm font-medium text-gray-700 mb-1">
+                                Category *
+                            </label>
+                            <select
+                                id="paypal_category"
+                                name="paypal_category"
+                                required
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="SOFTWARE">SOFTWARE - Software products</option>
+                                <option value="DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC">DIGITAL_MEDIA - Digital downloads</option>
+                                <option value="ART_AND_CRAFTS">ART_AND_CRAFTS - Art and creative works</option>
+                                <option value="ENTERTAINMENT">ENTERTAINMENT - Entertainment content</option>
+                                <option value="MUSIC">MUSIC - Music and audio</option>
+                                <option value="GAMES">GAMES - Video games</option>
+                                <option value="EDUCATION_AND_TEXTBOOKS">EDUCATION_AND_TEXTBOOKS - Educational content</option>
+                                <option value="BOOKS_PERIODICALS_AND_NEWSPAPERS">BOOKS_PERIODICALS_AND_NEWSPAPERS - Publications</option>
+                                <option value="COLLECTIBLES">COLLECTIBLES - Collectible items</option>
+                                <option value="CLOTHING_SHOES_AND_ACCESSORIES">CLOTHING_SHOES_AND_ACCESSORIES - Fashion</option>
+                                <option value="ELECTRONICS_AND_COMPUTERS">ELECTRONICS_AND_COMPUTERS - Electronics</option>
+                                <option value="TOYS_AND_HOBBIES">TOYS_AND_HOBBIES - Toys and hobbies</option>
+                                <option value="OTHER">OTHER - Other categories</option>
+                            </select>
+                            <p className="text-xs text-gray-500 mt-1">Can be updated later</p>
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="item_description" className="block text-sm font-medium text-gray-700 mb-1">
+                            Description *
+                        </label>
+                        <textarea
+                            id="item_description"
+                            name="item_description"
+                            required
+                            maxLength={256}
+                            rows={3}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="Enter detailed item description"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">Maximum 256 characters. Be specific about what you&apos;re offering.</p>
+                    </div>
+
+                    <div>
+                        <label htmlFor="paypal_home_url" className="block text-sm font-medium text-gray-700 mb-1">
+                            Home URL
+                        </label>
+                        <input
+                            type="url"
+                            id="paypal_home_url"
+                            name="paypal_home_url"
+                            defaultValue="https://themiracle.love"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            placeholder="https://themiracle.love"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">URL where customers can learn more about the product. Must use HTTPS.</p>
+                    </div>
+                </div>
+
+                {/* Information Box */}
+                <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg">
+                    <h4 className="font-medium text-sm mb-2">Item Creation Notes:</h4>
+                    <ul className="text-xs space-y-1">
+                        <li>• Items are automatically synced to PayPal catalog when possible</li>
+                        <li>• If PayPal sync fails, items are saved locally and can be synced later</li>
+                        <li>• All PayPal products are verified after creation for reliability</li>
+                        <li>• PayPal Product Type cannot be changed after creation</li>
+                        <li>• Image URLs must use HTTPS protocol for PayPal</li>
+                        <li>• Environment: {process.env.NODE_ENV === 'development' ? 'PayPal Sandbox (Test)' : 'PayPal Live (Production)'}</li>
+                    </ul>
+                </div>
+
+                <div className="flex justify-end">
+                    <SubmitButton isSubmitting={isSubmitting} />
+                </div>
+            </form>
         </div>
     );
 }

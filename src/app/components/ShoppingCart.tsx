@@ -22,11 +22,12 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
     const [paymentError, setPaymentError] = useState<string | null>(null);
     const [paymentSuccess, setPaymentSuccess] = useState(false);
     const [buttonsKey, setButtonsKey] = useState(0);
-    const processingRef = useRef(false);
+    const [buttonsReady, setButtonsReady] = useState(false);
 
-    // Add ref to track PayPal button container
+    // Processing state management
+    const processingRef = useRef(false);
     const paypalContainerRef = useRef<HTMLDivElement>(null);
-    const buttonsMountedRef = useRef(false);
+    const mountTimeoutRef = useRef<NodeJS.Timeout>();
 
     const {
         cart,
@@ -42,59 +43,74 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
     const totalValue = getTotalValue();
     const itemCount = getItemCount();
-    const displayCart = getDisplayCart(); // Grouped items for display
+    const displayCart = getDisplayCart();
 
-    // Reset payment states when cart opens/closes
+    // Reset states when cart opens/closes
     useEffect(() => {
         if (isOpen) {
             setPaymentError(null);
             setPaymentSuccess(false);
             processingRef.current = false;
-            buttonsMountedRef.current = false;
-        } else {
-            // Delay button key update to prevent rapid remounting
-            const timeoutId = setTimeout(() => {
+            setIsProcessing(false);
+
+            // Delay button initialization to prevent zoid conflicts
+            if (mountTimeoutRef.current) {
+                clearTimeout(mountTimeoutRef.current);
+            }
+
+            mountTimeoutRef.current = setTimeout(() => {
+                setButtonsReady(true);
                 setButtonsKey(prev => prev + 1);
-                buttonsMountedRef.current = false;
+            }, 300);
+        } else {
+            setButtonsReady(false);
+            if (mountTimeoutRef.current) {
+                clearTimeout(mountTimeoutRef.current);
+            }
+
+            // Clean up when cart closes
+            setTimeout(() => {
+                setButtonsKey(prev => prev + 1);
+                setPaymentError(null);
+                setPaymentSuccess(false);
             }, 100);
-            return () => clearTimeout(timeoutId);
         }
+
+        return () => {
+            if (mountTimeoutRef.current) {
+                clearTimeout(mountTimeoutRef.current);
+            }
+        };
     }, [isOpen]);
 
-    // Prevent rapid button remounting
+    // Handle PayPal script resolution
     useEffect(() => {
-        if (isResolved && !buttonsMountedRef.current) {
-            buttonsMountedRef.current = true;
+        if (!isResolved || !isOpen || cart.length === 0) {
+            setButtonsReady(false);
+            return;
         }
-    }, [isResolved, buttonsKey]);
+
+        // Ensure buttons are ready after script loads
+        const readyTimeout = setTimeout(() => {
+            setButtonsReady(true);
+        }, 200);
+
+        return () => clearTimeout(readyTimeout);
+    }, [isResolved, isOpen, cart.length]);
 
     // Fix image URL path function
     const getImageUrl = (url: string | undefined) => {
         if (!url) return '/themiracle.png';
-
-        // Remove /public prefix if it exists
         if (url.startsWith('/public/')) {
             return url.replace('/public', '');
         }
-
-        // If it's already a proper URL (starts with http or /)
         if (url.startsWith('http') || url.startsWith('/')) {
             return url;
         }
-
-        // Add leading slash for relative paths
         return '/' + url;
     };
 
-    // Prevent cart from closing during PayPal interactions
-    const handleBackdropClick = useCallback((e: React.MouseEvent) => {
-        // Only close if clicking the backdrop and not processing payment
-        if (e.target === e.currentTarget && !isProcessing && !processingRef.current) {
-            onClose();
-        }
-    }, [isProcessing, onClose]);
-
-    // Enhanced close handler that respects PayPal state
+    // Enhanced close handler
     const handleCartClose = useCallback(() => {
         if (isProcessing || processingRef.current) {
             console.log('Payment is processing, preventing cart close');
@@ -103,6 +119,26 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         onClose();
     }, [isProcessing, onClose]);
 
+    // Backdrop click handler
+    const handleBackdropClick = useCallback((e: React.MouseEvent) => {
+        if (e.target === e.currentTarget && !isProcessing && !processingRef.current) {
+            onClose();
+        }
+    }, [isProcessing, onClose]);
+
+    // Clear error and retry PayPal
+    const handleRetryPayment = useCallback(() => {
+        setPaymentError(null);
+        processingRef.current = false;
+        setIsProcessing(false);
+        setButtonsReady(false);
+
+        setTimeout(() => {
+            setButtonsKey(prev => prev + 1);
+            setButtonsReady(true);
+        }, 500);
+    }, []);
+
     if (!isOpen) return null;
 
     const paypalButtonOptions: PayPalButtonsComponentOptions = {
@@ -110,12 +146,12 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
             color: "blue",
             shape: "rect",
             label: "pay",
-            disableMaxWidth: false,
             height: 45,
-            layout: "vertical"
+            layout: "vertical",
+            tagline: false,
         },
         createOrder: async (data, actions) => {
-            if (processingRef.current) {
+            if (processingRef.current || isProcessing) {
                 throw new Error("Order creation already in progress");
             }
 
@@ -124,23 +160,21 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
             setPaymentError(null);
 
             try {
-                // Each cart item becomes a separate PayPal item (all with quantity "1")
+                console.log("Creating PayPal order with items:", cart.length);
+
                 const paypalItems = cart.map(cartItem => ({
                     name: cartItem.name || 'Unknown Item',
-                    quantity: '1', // Always 1 since each cart item is a separate instance
-                    category: 'DIGITAL_GOODS' as const,
+                    quantity: '1',
+                    category: cartItem.category || 'DIGITAL_GOODS' as const,
                     unit_amount: {
                         currency_code: 'USD',
                         value: (cartItem.price || 0).toFixed(2)
                     }
                 }));
 
-                // Calculate total - sum of all individual item prices
                 const calculatedTotal = cart.reduce((total, cartItem) => {
                     return total + (cartItem.price || 0);
                 }, 0);
-
-                console.log("Creating PayPal order with individual items:", paypalItems.length, "total items");
 
                 return actions.order.create({
                     intent: "CAPTURE",
@@ -180,82 +214,65 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
         onApprove: async (data, actions) => {
             try {
                 const details = await actions.order!.capture();
-                console.log("Payment captured successfully");
+                console.log("Payment captured successfully:", details.id);
 
-                // Extract payer information from PayPal response
+                // Extract payer information
                 const payerInfo = details.payer;
                 const captureInfo = details.purchase_units?.[0]?.payments?.captures?.[0];
 
-                // Create order in database - each cart item becomes a separate order item
-                try {
-                    const orderItems = cart.map(cartItem => ({
-                        name: cartItem.name || 'Unknown Item',
-                        price: cartItem.price || 0,
-                        quantity: 1, // Always 1 since each cart item is separate
-                        paypal_product_id: cartItem.id // Original product ID
-                    }));
+                // Create order in database
+                const orderItems = cart.map(cartItem => ({
+                    name: cartItem.name || 'Unknown Item',
+                    price: cartItem.price || 0,
+                    quantity: 1,
+                    paypal_product_id: cartItem.id
+                }));
 
-                    console.log(`Created ${orderItems.length} individual order items from ${cart.length} cart items`);
-
-                    const orderData = {
-                        userId: user?.id || 'guest',
-                        paypal_order_id: details.id ?? '',
-                        paypal_payer_id: payerInfo?.payer_id ?? '',
-                        paypal_payer_email: payerInfo?.email_address ?? '',
-                        paypal_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : '',
-                        paypal_capture_id: captureInfo?.id ?? '',
-                        paypal_transaction_id: captureInfo?.id ?? '',
-                        total_amount: totalValue,
-                        currency_code: "USD",
-                        order_metadata: {
-                            cart_items: displayCart.map(item => ({
-                                id: item.productId,
-                                name: item.name,
-                                price: item.price,
-                                quantity: item.quantity,
-                                image_url: item.image_url,
-                                line_total: item.price * item.quantity
-                            })),
-                            payment_details: {
-                                paypal_order_id: details.id ?? '',
-                                payment_method: 'paypal',
-                                capture_time: captureInfo?.create_time,
-                                capture_status: captureInfo?.status,
-                                paypal_items: details.purchase_units?.[0]?.items || []
-                            },
-                            user_info: user ? {
-                                user_id: user.id,
-                                user_email: user.email,
-                                user_name: user.name
-                            } : {
-                                guest_payer_email: payerInfo?.email_address ?? '',
-                                guest_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : ''
-                            }
+                const orderData = {
+                    userId: user?.id || 'guest',
+                    paypal_order_id: details.id || '',
+                    paypal_payer_id: payerInfo?.payer_id || '',
+                    paypal_payer_email: payerInfo?.email_address || '',
+                    paypal_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : '',
+                    paypal_capture_id: captureInfo?.id || '',
+                    paypal_transaction_id: captureInfo?.id || '',
+                    total_amount: totalValue,
+                    currency_code: "USD",
+                    order_metadata: {
+                        cart_items: displayCart,
+                        payment_details: {
+                            paypal_order_id: details.id || '',
+                            payment_method: 'paypal',
+                            capture_time: captureInfo?.create_time,
+                            capture_status: captureInfo?.status
                         },
-                        items: orderItems
-                    };
+                        user_info: user ? {
+                            user_id: user.id,
+                            user_email: user.email,
+                            user_name: user.name
+                        } : {
+                            guest_payer_email: payerInfo?.email_address || '',
+                            guest_payer_name: payerInfo?.name ? `${payerInfo.name.given_name || ''} ${payerInfo.name.surname || ''}`.trim() : ''
+                        }
+                    },
+                    items: orderItems
+                };
 
-                    const createdOrder = await createOrder(orderData);
-                    console.log("Order created in database successfully:", createdOrder.id);
+                await createOrder(orderData);
+                console.log("Order created in database successfully");
 
-                } catch (dbError) {
-                    console.error("Failed to create order in database:", dbError);
-                    alert("Payment successful but there was an issue saving your order details. Please contact support with your transaction ID: " + details.id);
-                }
-
-                // Handle successful payment
                 setPaymentSuccess(true);
                 setPaymentError(null);
                 clearCart();
 
                 alert(
-                    `🎉 Payment successful!\n\nTransaction ID: ${details.id}\nAmount: $${totalValue.toFixed(2)}\n\nThank you for your purchase! Your digital items will be available in your account shortly.`
+                    `🎉 Payment successful!\n\nTransaction ID: ${details.id}\nAmount: $${totalValue.toFixed(2)}\n\nThank you for your purchase!`
                 );
 
                 setTimeout(() => {
-                    onClose();
+                    handleCartClose();
                     setPaymentSuccess(false);
-                }, 1000);
+                }, 1500);
 
             } catch (error) {
                 console.error("Payment capture error:", error);
@@ -266,19 +283,19 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                 setIsProcessing(false);
             }
         },
+
         onError: (error) => {
             console.error("PayPal error:", error);
-            setPaymentError("PayPal encountered an error. Please try again or use a different payment method.");
+            setPaymentError("PayPal encountered an error. Please try again.");
             processingRef.current = false;
             setIsProcessing(false);
 
-            // Don't immediately regenerate buttons on error to prevent zoid conflicts
+            // Delay button regeneration
             setTimeout(() => {
                 setButtonsKey(prev => prev + 1);
             }, 1000);
-
-            alert("There was an error with PayPal. Please try again or contact support if the problem persists.");
         },
+
         onCancel: () => {
             console.log("Payment cancelled");
             processingRef.current = false;
@@ -293,7 +310,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
             onClick={handleBackdropClick}
         >
             <div className="bg-white w-full max-w-md h-full shadow-lg transform transition-transform overflow-hidden flex flex-col">
-                {/* Sticky Header */}
+                {/* Header */}
                 <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-white shadow-sm">
                     <h2 className="text-xl font-semibold text-gray-800">
                         Shopping Cart ({displayCart.length})
@@ -308,14 +325,11 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                     </button>
                 </div>
 
-                {/* Payment Status Messages */}
+                {/* Status Messages */}
                 {paymentError && (
                     <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-2 rounded relative">
                         <button
-                            onClick={() => {
-                                setPaymentError(null);
-                                setButtonsKey(prev => prev + 1); // Force new buttons
-                            }}
+                            onClick={() => setPaymentError(null)}
                             className="absolute top-1 right-2 text-red-400 hover:text-red-600"
                         >
                             ×
@@ -331,26 +345,20 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                     </div>
                 )}
 
-                {/* Processing indicator */}
                 {(isProcessing || processingRef.current) && (
                     <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 mx-4 mt-2 rounded">
-                        <p className="text-sm">💳 Processing payment... Please wait and do not close this window.</p>
+                        <p className="text-sm">💳 Processing payment... Please wait.</p>
                     </div>
                 )}
 
-                {/* Scrollable Content Container - This will contain both cart items and payment section */}
+                {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
-                    {/* Cart Items Section */}
+                    {/* Cart Items */}
                     <div className="p-4">
                         {displayCart.length === 0 ? (
                             <div className="text-center py-12 text-gray-500">
                                 <div className="mb-4">
-                                    <svg
-                                        className="w-12 h-12 text-gray-300 mx-auto mb-4"
-                                        fill="none"
-                                        stroke="currentColor"
-                                        viewBox="0 0 24 24"
-                                    >
+                                    <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6" />
                                     </svg>
                                 </div>
@@ -361,7 +369,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                             <div className="space-y-4 mb-6">
                                 {displayCart.map((displayItem) => (
                                     <div key={displayItem.productId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
-                                        {/* Item Image with proper URL handling */}
+                                        {/* Item Image */}
                                         <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
                                             <Image
                                                 src={getImageUrl(displayItem.image_url)}
@@ -391,7 +399,6 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                                     onClick={() => updateQuantity(displayItem.productId, displayItem.quantity - 1)}
                                                     disabled={isProcessing || processingRef.current}
                                                     className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors disabled:opacity-50"
-                                                    aria-label="Decrease quantity"
                                                 >
                                                     <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
                                                 </button>
@@ -402,7 +409,6 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                                     onClick={() => updateQuantity(displayItem.productId, displayItem.quantity + 1)}
                                                     disabled={isProcessing || processingRef.current}
                                                     className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors disabled:opacity-50"
-                                                    aria-label="Increase quantity"
                                                 >
                                                     <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
                                                 </button>
@@ -415,10 +421,9 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                                 ${(displayItem.price * displayItem.quantity).toFixed(2)}
                                             </p>
                                             <button
-                                                onClick={() => removeFromCart(displayItem.productId, true)} // Remove all instances
+                                                onClick={() => removeFromCart(displayItem.productId, true)}
                                                 disabled={isProcessing || processingRef.current}
                                                 className="mt-2 p-1 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
-                                                aria-label="Remove all instances of this item"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
                                             </button>
@@ -429,7 +434,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                         )}
                     </div>
 
-                    {/* Payment Section - Now inside scrollable area */}
+                    {/* Payment Section */}
                     {displayCart.length > 0 && (
                         <div className="border-t bg-white p-4 space-y-4">
                             {/* Total */}
@@ -454,30 +459,19 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                 Clear Cart
                             </button>
 
-                            {/* PayPal Buttons - Enhanced container */}
-                            <div
-                                ref={paypalContainerRef}
-                                className="paypal-button-container relative"
-                            >
+                            {/* PayPal Buttons Container */}
+                            <div ref={paypalContainerRef} className="paypal-button-container">
                                 {paymentError && (
                                     <button
-                                        onClick={() => {
-                                            setPaymentError(null);
-                                            processingRef.current = false;
-                                            setIsProcessing(false);
-                                            // Delay button regeneration to prevent zoid conflicts
-                                            setTimeout(() => {
-                                                setButtonsKey(prev => prev + 1);
-                                            }, 500);
-                                        }}
+                                        onClick={handleRetryPayment}
                                         className="w-full mb-2 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
                                     >
                                         Try Payment Again
                                     </button>
                                 )}
 
-                                {isResolved && !isPending && !paymentSuccess && buttonsMountedRef.current ? (
-                                    <div key={`paypal-buttons-${buttonsKey}`}>
+                                {isResolved && buttonsReady && !paymentSuccess ? (
+                                    <div key={`paypal-buttons-${buttonsKey}-${totalValue}`}>
                                         <PayPalButtons
                                             {...paypalButtonOptions}
                                             forceReRender={[buttonsKey, totalValue]}
@@ -485,8 +479,8 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                     </div>
                                 ) : (
                                     <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
-                                        <Spinner />
-                                        <span className="ml-2 text-sm text-gray-600">
+                                        <Spinner size="lg" />
+                                        <span className="ml-4 text-sm text-gray-600">
                                             {isProcessing || processingRef.current ? 'Processing payment...' :
                                                 paymentSuccess ? 'Payment completed!' :
                                                     isPending ? 'Loading PayPal...' :
@@ -496,28 +490,19 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                 )}
                             </div>
 
-                            {/* Enhanced Security Notice */}
+                            {/* Security Notice */}
                             <div className="text-center pb-4">
-                                <p className="text-xs text-gray-500">
-                                    🔒 Secure payment powered by PayPal
-                                </p>
-                                <p className="text-xs text-gray-400 mt-1">
-                                    Your payment information is encrypted and secure
-                                </p>
+                                <p className="text-xs text-gray-500">🔒 Secure payment powered by PayPal</p>
+                                <p className="text-xs text-gray-400 mt-1">Your payment information is encrypted and secure</p>
                                 {(isProcessing || processingRef.current) && (
                                     <p className="text-xs text-blue-500 mt-1 font-medium">
                                         ⚠️ Do not close this window during payment processing
                                     </p>
                                 )}
-                                <p className="text-xs text-gray-400 mt-2">
-                                    💳 Credit card forms will appear below. Scroll down if needed.
-                                </p>
                             </div>
 
-                            {/* Extra padding to ensure PayPal credit card forms have space */}
-                            <div className="h-96 w-full">
-                                {/* This empty div provides extra scroll space for PayPal credit card forms */}
-                            </div>
+                            {/* Extra space for PayPal forms */}
+                            <div className="h-80 w-full"></div>
                         </div>
                     )}
                 </div>

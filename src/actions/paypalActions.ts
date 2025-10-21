@@ -173,60 +173,224 @@ export class PayPalInterface {
         }
     }
 
-    async createItem(itemName: string, itemDescription: string, itemPrice: number, imageUrl: string) {
+    async createItem(
+        itemName: string,
+        itemDescription: string,
+        itemPrice: number,
+        imageUrl: string,
+        itemType: string = "SERVICE",
+        itemCategory: string = "SOFTWARE",
+        homeUrl: string = "https://themiracle.love"
+    ) {
         const token = await this.getToken();
-        const url = API_URL + '/v1/catalogs/products'; // Use v1 endpoint, not v2
+        const url = API_URL + '/v1/catalogs/products';
         const headers = {
             'Accept': 'application/json',
             'Accept-Language': 'en_US',
             'content-type': 'application/json',
             'Authorization': `Bearer ${token?.access_token}`
         };
+
+        // Enhanced input validation and cleaning
+        if (!itemName || itemName.trim().length === 0) {
+            throw new Error('Product name is required');
+        }
+
+        const cleanName = itemName.trim();
+        if (cleanName.length > 127) {
+            throw new Error('Product name must be 127 characters or less');
+        }
+
+        // Remove any problematic characters from name
+        const sanitizedName = cleanName.replace(/[^\w\s\-\.,'!?()&]/g, '');
+        if (sanitizedName.length === 0) {
+            throw new Error('Product name contains only invalid characters');
+        }
+
+        if (!itemDescription || itemDescription.trim().length === 0) {
+            throw new Error('Product description is required');
+        }
+
+        const cleanDescription = itemDescription.trim();
+        if (cleanDescription.length > 256) {
+            throw new Error('Product description must be 256 characters or less');
+        }
+
+        // Remove any problematic characters from description
+        const sanitizedDescription = cleanDescription.replace(/[^\w\s\-\.,'!?()&$%]/g, '');
+        if (sanitizedDescription.length === 0) {
+            throw new Error('Product description contains only invalid characters');
+        }
+
+        // Validate URLs
+        if (!imageUrl || !imageUrl.startsWith('https://')) {
+            throw new Error('Image URL is required and must use HTTPS protocol');
+        }
+
+        if (!homeUrl || !homeUrl.startsWith('https://')) {
+            throw new Error('Home URL is required and must use HTTPS protocol');
+        }
+
+        // Test URL validity
+        try {
+            new URL(imageUrl);
+            new URL(homeUrl);
+        } catch (urlError) {
+            throw new Error('Invalid URL format provided');
+        }
+
+        // Validate product type
+        const validTypes = ['PHYSICAL', 'DIGITAL', 'SERVICE'];
+        if (!validTypes.includes(itemType)) {
+            throw new Error(`Invalid product type: ${itemType}. Must be one of: ${validTypes.join(', ')}`);
+        }
+
+        // Validate category
+        const validCategories = [
+            'SOFTWARE',
+            'DIGITAL_MEDIA_BOOKS_MOVIES_MUSIC', // Changed from DIGITAL_GOODS
+            'BOOKS_PERIODICALS_AND_NEWSPAPERS',
+            'ENTERTAINMENT',
+            'MUSIC',
+            'GAMES',
+            'EDUCATION_AND_TEXTBOOKS',
+            'ART_AND_CRAFTS',
+            'COLLECTIBLES',
+            'CLOTHING_SHOES_AND_ACCESSORIES',
+            'ELECTRONICS_AND_COMPUTERS',
+            'TOYS_AND_HOBBIES',
+            'OTHER'
+        ];
+        if (!validCategories.includes(itemCategory)) {
+            throw new Error(`Invalid category: ${itemCategory}. Must be one of: ${validCategories.join(', ')}`);
+        }
+
+        // Ensure URLs are properly formatted
+        const cleanImageUrl = imageUrl.trim();
+        const cleanHomeUrl = homeUrl.trim();
+
         const data = {
-            "name": itemName,
-            "description": itemDescription,
-            "type": "SERVICE",
-            "category": "SOFTWARE",
-            "image_url": imageUrl,
-            "home_url": "https://themiracle.love",
+            "name": sanitizedName,
+            "description": sanitizedDescription,
+            "type": itemType,
+            "category": itemCategory,
+            "image_url": cleanImageUrl,
+            "home_url": cleanHomeUrl
         };
 
         try {
-            console.log("Creating item with data:", data);
+            console.log("Creating PayPal product with sanitized data:", {
+                name: data.name,
+                description: data.description.substring(0, 50) + (data.description.length > 50 ? '...' : ''),
+                type: data.type,
+                category: data.category,
+                image_url: data.image_url,
+                home_url: data.home_url
+            });
+
             const response = await axios.post(url, data, { headers });
-            console.log("Item created successfully:", response.data);
+            console.log("PayPal product created successfully:", response.data);
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                console.error("Error creating item:", error.response?.data || error.message);
-                // Log more details for debugging
-                console.error("Status:", error.response?.status);
-                console.error("Headers:", error.response?.headers);
-                console.error("Request URL:", url);
-                console.error("Request Headers:", headers);
+                const status = error.response?.status;
+                const errorData = error.response?.data;
 
-                throw new Error(`Failed to create item: ${error.response?.data?.message || error.message}`);
+                console.error("Error creating PayPal product:", {
+                    status: status,
+                    error: errorData,
+                    sentData: data
+                });
+
+                let errorMessage = 'Failed to create PayPal product';
+
+                if (status === 400) {
+                    if (errorData?.details) {
+                        const details = Array.isArray(errorData.details) ? errorData.details : [errorData.details];
+                        const detailMessages = details.map((detail: { description?: string; message?: string }) => detail.description || detail.message || detail).join(', ');
+                        errorMessage = `Bad request: ${detailMessages}`;
+                    } else if (errorData?.message) {
+                        errorMessage = `Bad request: ${errorData.message}`;
+                    } else {
+                        errorMessage = 'Bad request: The data sent to PayPal is invalid';
+                    }
+                } else if (status === 401) {
+                    errorMessage = 'Authentication failed: Invalid PayPal credentials';
+                } else if (status === 403) {
+                    errorMessage = 'Access forbidden: Insufficient permissions';
+                } else if (status === 422) {
+                    errorMessage = 'Unprocessable entity: PayPal cannot process this product data';
+                } else {
+                    errorMessage = errorData?.message || error.message || 'Unknown PayPal API error';
+                }
+
+                throw new Error(errorMessage);
             } else {
                 console.error("Unexpected error:", error);
-                throw new Error("An unexpected error occurred while creating the item.");
+                throw new Error("An unexpected error occurred while creating the PayPal product.");
             }
         }
     }
     async getItems() {
         const token = await this.getToken();
-        const url = API_URL + '/v1/catalogs/products?page_size=20&page=1&total_required=true';
-        const headers = {
-            'Accept': 'application/json',
-            'Accept-Language': 'en_US',
-            'content-type': 'application/json',
-            'Authorization': `Bearer ${token?.access_token}`
-        }
+        const allProducts: PayPalProduct[] = [];
+        let page = 1;
+        let hasMore = true;
+        const pageSize = 20; // PayPal's maximum page size
+
         try {
-            const resp = await axios.get(url, { headers });
-            console.log(resp.data)
-            return resp.data;
+            while (hasMore) {
+                const url = API_URL + `/v1/catalogs/products?page_size=${pageSize}&page=${page}&total_required=true`;
+                const headers = {
+                    'Accept': 'application/json',
+                    'Accept-Language': 'en_US',
+                    'content-type': 'application/json',
+                    'Authorization': `Bearer ${token?.access_token}`
+                };
+
+                console.log(`Fetching PayPal products page ${page}...`);
+                const resp = await axios.get(url, { headers });
+                const data = resp.data;
+
+                if (data.products && data.products.length > 0) {
+                    allProducts.push(...data.products);
+                    console.log(`Fetched ${data.products.length} products from page ${page}, total so far: ${allProducts.length}`);
+                } else {
+                    console.log(`No products found on page ${page}, stopping pagination`);
+                    hasMore = false;
+                    break;
+                }
+
+                // Check if we've reached the end
+                if (data.products.length < pageSize) {
+                    console.log(`Received fewer than ${pageSize} products, reached end of catalog`);
+                    hasMore = false;
+                } else if (data.total_items && allProducts.length >= data.total_items) {
+                    console.log(`Fetched all ${data.total_items} available products`);
+                    hasMore = false;
+                } else {
+                    page++;
+                    // Add a small delay to be respectful to PayPal's API
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                }
+
+                // Safety check to prevent infinite loops
+                if (page > 100) {
+                    console.warn('Reached maximum page limit (100), stopping pagination');
+                    hasMore = false;
+                }
+            }
+
+            console.log(`✅ PayPal catalog fetch complete: ${allProducts.length} total products retrieved`);
+
+            return {
+                products: allProducts,
+                total_items: allProducts.length
+            };
+
         } catch (e) {
-            throw new Error(`Failed to get PayPal items: `);
+            console.error('Error fetching PayPal products:', e);
+            throw new Error(`Failed to get PayPal items: ${e instanceof Error ? e.message : 'Unknown error'}`);
         }
     }
 
@@ -243,7 +407,16 @@ export class PayPalInterface {
             const resp = await axios.get(url, { headers });
             return resp.data;
         } catch (e) {
-            console.error(e)
+            if (axios.isAxiosError(e)) {
+                console.error(`PayPal getProduct error for ID ${id}:`, {
+                    status: e.response?.status,
+                    statusText: e.response?.statusText,
+                    data: e.response?.data
+                });
+                throw new Error(`Failed to get PayPal product ${id}: ${e.response?.data?.message || e.message}`);
+            }
+            console.error("Unexpected error in getProduct:", e);
+            throw new Error(`Unexpected error getting PayPal product ${id}: ${e}`);
         }
     }
 
@@ -320,12 +493,67 @@ export class PayPalInterface {
             'Authorization': `Bearer ${token?.access_token}`,
         };
 
-        // Create patch operations array
-        const patchOperations = Object.entries(updates).map(([key, value]) => ({
-            op: 'replace',
-            path: `/${key}`,
-            value: value
-        }));
+        // Create patch operations array with proper PayPal schema
+        const patchOperations: Array<{
+            op: 'replace';
+            path: string;
+            value: string;
+        }> = [];
+
+        if (updates.name !== undefined) {
+            patchOperations.push({
+                op: 'replace',
+                path: '/name',
+                value: updates.name
+            });
+        }
+
+        if (updates.description !== undefined) {
+            patchOperations.push({
+                op: 'replace',
+                path: '/description',
+                value: updates.description
+            });
+        }
+
+        if (updates.category !== undefined) {
+            patchOperations.push({
+                op: 'replace',
+                path: '/category',
+                value: updates.category
+            });
+        }
+
+        if (updates.image_url !== undefined) {
+            patchOperations.push({
+                op: 'replace',
+                path: '/image_url',
+                value: updates.image_url
+            });
+        }
+
+        if (updates.home_url !== undefined) {
+            patchOperations.push({
+                op: 'replace',
+                path: '/home_url',
+                value: updates.home_url
+            });
+        }
+
+        // PayPal doesn't allow updating 'type' after creation, so we'll skip it
+        // if (updates.type !== undefined) {
+        //     patchOperations.push({
+        //         op: 'replace',
+        //         path: '/type',
+        //         value: updates.type
+        //     });
+        // }
+
+        if (patchOperations.length === 0) {
+            throw new Error('No valid updates provided');
+        }
+
+        console.log('PayPal patch operations:', JSON.stringify(patchOperations, null, 2));
 
         try {
             const response = await axios.patch(url, patchOperations, { headers });
@@ -333,8 +561,19 @@ export class PayPalInterface {
             return response.data;
         } catch (error) {
             if (axios.isAxiosError(error)) {
-                console.error("Error updating product:", error.response?.data || error.message);
-                throw new Error(`Failed to update product: ${error.response?.data?.message || error.message}`);
+                console.error("Error updating product:", {
+                    status: error.response?.status,
+                    statusText: error.response?.statusText,
+                    data: error.response?.data,
+                    url: url,
+                    patchOps: patchOperations
+                });
+
+                const errorMessage = error.response?.data?.message ||
+                    error.response?.data?.details?.[0]?.description ||
+                    error.message;
+
+                throw new Error(`Failed to update product: ${errorMessage}`);
             } else {
                 console.error("Unexpected error:", error);
                 throw new Error("An unexpected error occurred while updating the product.");

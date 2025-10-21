@@ -30,14 +30,19 @@ export default function Navbar() {
 
   return (
     <nav
-      className="sticky top-0 z-50 shadow-md border-b border-gray-200"
-      style={{ background: "linear-gradient(#fcb6d9, #bc0061)" }}
+      className="fixed top-0 left-0 right-0 z-50 shadow-md border-b border-gray-200"
+      style={{
+        background: "linear-gradient(#fcb6d9, #bc0061)",
+        transform: "translateZ(0)", // Force hardware acceleration
+        willChange: "transform", // Optimize for position changes
+        height: "4rem" // Explicitly set navbar height for consistent spacing
+      }}
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-white">
+            <Link href="/" className="text-2xl font-bold text-white hover:text-gray-200 transition-colors">
               themiracle.love
             </Link>
           </div>
@@ -104,9 +109,9 @@ export default function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Navigation Menu */}
+        {/* Mobile Navigation Menu - with proper z-index */}
         {isMenuOpen && (
-          <div className="md:hidden border-t border-gray-300">
+          <div className="md:hidden border-t border-gray-300 absolute top-16 left-0 right-0" style={{ transform: "translateZ(0)" }}>
             <div className="px-2 pt-2 pb-3 space-y-1 bg-white bg-opacity-95 backdrop-blur-sm">
               <Link
                 href="/"

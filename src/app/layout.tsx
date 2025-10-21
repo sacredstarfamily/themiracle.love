@@ -12,8 +12,8 @@ const cheri = localFont({
   variable: "--font-cheri",
   weight: "100 900",
   display: 'swap',
+  fallback: ['Georgia', 'Times New Roman', 'serif'],
 });
-
 
 export default async function RootLayout({
   children,
@@ -25,9 +25,40 @@ export default async function RootLayout({
   return (
     <html lang="en" className="h-full bg-pink-300 p-0 m-0">
       <head>
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        {/* Preload the cheri font for better performance */}
+        <link
+          rel="preload"
+          href="/fonts/cheri.ttf"
+          as="font"
+          type="font/ttf"
+          crossOrigin="anonymous"
+        />
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            html {
+              scroll-behavior: smooth;
+              scroll-padding-top: 4rem;
+            }
+            
+            body {
+              padding-top: env(safe-area-inset-top, 0);
+            }
+            
+            * {
+              box-sizing: border-box;
+            }
+          `
+        }} />
       </head>
-      <body suppressHydrationWarning={true} className={`${cheri.variable} antialiased`}>
+      <body
+        suppressHydrationWarning={true}
+        className={`${cheri.variable} antialiased`}
+        style={{
+          transform: 'translateZ(0)',
+          backfaceVisibility: 'hidden'
+        }}
+      >
         <PayPalProvider>
           <ContextProvider cookies={cookies}>{children}</ContextProvider>
         </PayPalProvider>

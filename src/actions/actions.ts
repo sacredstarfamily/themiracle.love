@@ -278,141 +278,59 @@ export async function logoutUserAction() {
 }
 
 //Items functions
+export async function getDbItems() {
+  try {
+    const items = await prisma.item.findMany({
+    });
+    return items;
+  } catch (error) {
+    console.error("Error in getDbItems:", error);
+    return [];
+  }
+}
+
 export async function getAllItems() {
   try {
-    const paypal = new PayPalInterface();
+    console.log('🔄 Starting getAllItems function...');
 
-    // Fetch both local items and PayPal items in parallel
-    const [localItems, paypalResponse] = await Promise.all([
-      prisma.item.findMany({
-        orderBy: {
-          createdAt: 'desc'
-        },
-        select: {
-          id: true,
-          name: true,
-          img_url: true,
-          price: true,
-          quantity: true,
-          paypal_product_id: true,
-          orderId: true,
-          paypal_sync_status: true,
-          paypal_data: true,
-          paypal_last_sync: true,
-          createdAt: true,
-          updatedAt: true
-        }
-      }),
-      paypal.getItems().catch(error => {
-        console.error("PayPal fetch failed:", error);
-        return { products: [] };
-      })
-    ]);
-
-    const paypalItems = Array.isArray(paypalResponse.products) ? paypalResponse.products : [];
-
-    type PayPalProduct = {
-      id: string;
-      name?: string;
-      image_url?: string;
-      [key: string]: unknown;
-    };
-
-    const paypalItemsMap = new Map(
-      paypalItems.map((item: PayPalProduct) => [item.id, item])
-    );
-
-    // Properly respect database sync status
-    const mergedItems = localItems.map(localItem => {
-      let paypal_status: 'synced' | 'missing' | 'local_only' | 'paypal_only';
-
-      // Use database sync status as the primary source of truth
-      if (localItem.paypal_sync_status === 'LOCAL_ONLY') {
-        paypal_status = 'local_only';
-      } else if (localItem.paypal_sync_status === 'SYNCED') {
-        paypal_status = 'synced';
-      } else if (localItem.paypal_sync_status === 'PAYPAL_ONLY') {
-        paypal_status = 'paypal_only';
-      } else if (localItem.paypal_sync_status === 'MISSING') {
-        paypal_status = 'missing';
-      } else {
-        // Legacy items without proper sync status - determine based on PayPal ID
-        if (!localItem.paypal_product_id) {
-          paypal_status = 'local_only';
-
-          // Update DB to reflect this (without awaiting to avoid blocking)
-          prisma.item.update({
-            where: { id: localItem.id },
-            data: { paypal_sync_status: 'LOCAL_ONLY' }
-          }).catch(() => { }); // Silent fail
-        } else {
-          // Has PayPal ID but no sync status - check if it exists in PayPal
-          const existsInPayPal = paypalItemsMap.has(localItem.paypal_product_id);
-          paypal_status = existsInPayPal ? 'synced' : 'missing';
-
-          // Update DB to reflect this (without awaiting to avoid blocking)
-          prisma.item.update({
-            where: { id: localItem.id },
-            data: {
-              paypal_sync_status: existsInPayPal ? 'SYNCED' : 'MISSING',
-              paypal_last_sync: new Date()
-            }
-          }).catch(() => { }); // Silent fail
-        }
-      }
-
-      return {
-        ...localItem,
-        paypal_data: localItem.paypal_product_id ? paypalItemsMap.get(localItem.paypal_product_id) || null : null,
-        paypal_status
-      };
-    });
-
-    // Find PayPal items that don't exist in local database (orphaned)
-    const orphanedPayPalItems = paypalItems
-      .filter((paypalItem: PayPalProduct) => {
-        return !localItems.some(localItem => localItem.paypal_product_id === paypalItem.id);
-      })
-      .map((paypalItem: PayPalProduct) => ({
-        id: `paypal_${paypalItem.id}`,
-        name: paypalItem.name || 'Unnamed Product',
-        img_url: paypalItem.image_url || '/placeholder.png',
-        price: 0,
-        quantity: 0,
-        paypal_product_id: paypalItem.id,
-        paypal_sync_status: 'PAYPAL_ONLY' as const,
-        paypal_data: paypalItem,
-        paypal_status: 'paypal_only' as const
-      }));
-
-    // Combine all items
-    const allItems = [...mergedItems, ...orphanedPayPalItems];
-
-    return allItems;
-  } catch (error) {
-    console.error("Error in getAllItems:", error);
-
-    // Fallback to local items only
+    // First, try to get local items from database
     const localItems = await prisma.item.findMany({
-      orderBy: { createdAt: 'desc' }
+      orderBy: {
+        createdAt: 'desc'
+      }
     });
 
-    return localItems.map(item => ({
+
+    console.log(`📊 Found ${localItems.length} local items in database`);
+
+    // Return early with just local items to avoid PayPal fetch issues
+    const mappedItems = localItems.map(item => ({
       ...item,
-      paypal_data: null,
+      paypal_data: item.paypal_data || null,
       paypal_status: item.paypal_sync_status === 'LOCAL_ONLY' ? 'local_only' as const :
         item.paypal_sync_status === 'SYNCED' ? 'synced' as const :
           item.paypal_product_id ? 'missing' as const : 'local_only' as const
     }));
+
+    console.log(`✅ Returning ${mappedItems.length} items (simplified query)`);
+    return mappedItems;
+
+  } catch (error) {
+    console.error("Error in getAllItems:", error);
+    // Return empty array if query fails
+    return [];
   }
 }
 
 // Add function to sync PayPal catalog with local database
 export async function syncPayPalCatalog() {
   try {
+    console.log('🔄 Starting PayPal catalog sync...');
     const paypal = new PayPalInterface();
     const paypalResponse = await paypal.getItems();
     const paypalItems = paypalResponse.products || [];
+
+    console.log(`📊 Found ${paypalItems.length} items in PayPal catalog for sync`);
 
     const syncResults = {
       updated: 0,
@@ -483,6 +401,8 @@ export async function syncPayPalCatalog() {
     } catch (catalogError) {
       // Silent fail for catalog tracking
     }
+
+    console.log(`✅ PayPal catalog sync completed: ${syncResults.created} created, ${syncResults.updated} updated, ${syncResults.errors} errors`);
 
     return syncResults;
   } catch (error) {

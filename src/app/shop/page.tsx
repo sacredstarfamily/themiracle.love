@@ -1,6 +1,7 @@
 'use client';
 import { getAllItems } from "@/actions/actions";
-import { Item } from "@/app/admin/components/ItemsTable";
+import { Spinner } from "@/components/icons";
+import { Item } from "@/lib/definitions"; // Updated import
 import { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
@@ -19,20 +20,40 @@ export default function ShopPage() {
         const fetchItems = async () => {
             setLoading(true);
             try {
+                console.log('🔄 Fetching items for shop page...');
                 const fetchedItems = await getAllItems();
-                // Filter to show only items that are synced with database and available
-                const availableItems = fetchedItems.filter(item =>
-                    // Only show items that exist in local database (not PayPal-only)
 
-                    !item.name.includes('| no inventory') &&
-                    // Has a valid name and image
-                    item.name &&
-                    item.img_url
-                );
+                if (!Array.isArray(fetchedItems)) {
+                    console.error('getAllItems returned non-array:', fetchedItems);
+                    setItems([]);
+                    setError("Invalid data format received");
+                    return;
+                }
+
+                console.log(`📊 Received ${fetchedItems.length} items from getAllItems`);
+
+                // Enhanced filtering to use all available fields
+                const availableItems = fetchedItems.filter(item => {
+                    // Only show items that exist in local database (not PayPal-only)
+                    const isNotPayPalOnly = !item.id?.startsWith('paypal_');
+                    // Don't show items marked as no inventory
+                    const hasInventory = !item.name?.includes('| no inventory');
+                    // Has valid name and image
+                    const hasValidData = item.name && item.img_url;
+                    // Has quantity > 0 or is not tracking inventory
+                    const hasStock = item.quantity > 0 || !item.inventory_tracked;
+                    // Item is active
+                    const isActive = item.is_active !== false;
+
+                    return isNotPayPalOnly && hasInventory && hasValidData && hasStock && isActive;
+                });
+
+                console.log(`📊 Filtered to ${availableItems.length} available items for shop`);
                 setItems(availableItems);
             } catch (error) {
                 console.error("Failed to fetch items:", error);
                 setError("Failed to load shop items");
+                setItems([]);
             } finally {
                 setLoading(false);
             }
@@ -56,8 +77,10 @@ export default function ShopPage() {
             <div>
                 <Navbar />
                 <div className="flex justify-center items-center min-h-screen">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
-                    <span className="ml-3 text-lg">Loading shop...</span>
+                    <div className="text-center">
+                        <Spinner size="xl" />
+                        <span className="block mt-4 text-lg font-medium text-gray-700">Loading shop...</span>
+                    </div>
                 </div>
                 <Footer />
             </div>
@@ -89,15 +112,13 @@ export default function ShopPage() {
             </div>
 
             {/* Main content with top padding for sticky navbar */}
-            <main className="container mx-auto px-4 py-8 pt-24">
+            <main className="container mx-auto px-4 py-8 pt-24 min-h-screen">
 
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Shop</h1>
                     <PayButton />
-                    <p className="text-lg text-gray-600">Discover amazing products from TheMiracle</p>
-                    <div className="mt-2 text-sm text-gray-500">
-                        Showing {items.length} available products from our database
-                    </div>
+                    <p className="text-lg text-gray-600">Discover amazing products from TheMiracle.Love</p>
+
                 </div>
 
                 {items.length === 0 ? (

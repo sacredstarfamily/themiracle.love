@@ -25,6 +25,10 @@ const config = {
         card: '#ffffff',
         'card-foreground': '#1f2937', // gray-800
       },
+      fontFamily: {
+        'cheri': ['var(--font-cheri)', 'Georgia', 'Times New Roman', 'serif'],
+        'sans': ['system-ui', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
+      },
     },
   },
   plugins: [

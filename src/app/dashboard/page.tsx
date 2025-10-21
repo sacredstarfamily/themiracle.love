@@ -1,9 +1,9 @@
 'use client';
-import { getUser, logoutUserAction } from "@/actions/actions";
+import { getUser } from "@/actions/actions";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
-import { useRouter, useSearchParams } from "next/navigation";
-import { lazy, memo, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
+import { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import DashNav from "./components/DashNav";
@@ -20,42 +20,15 @@ const LoadingSpinner = () => (
   </div>
 );
 
-// Memoized logout button component
-const LogoutButton = memo(function LogoutButton() {
-  const { logout } = useAuthStore();
-  const router = useRouter();
+// LogoutButton removed because it was unused
 
-  const handleLogout = useCallback(async () => {
-    try {
-      logout()
-      await logoutUserAction();
-    } catch (error) {
-      console.error("Logout failed:", error);
-    } finally {
-      router.push("/auth");
-    }
-  }, [logout, router]);
-
-  return (
-    <button
-      onClick={handleLogout}
-      className="flex w-1/2 justify-center border-2 self-center border-teal-100 rounded-md bg-red-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-red-500 hover:border-teal-600 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-red-600 transition-colors duration-150"
-    >
-      Logout
-    </button>
-  );
-});
-
-export default function DashboardPage() {
+export default function Dashboard() {
   const params = useSearchParams();
   const token = params.get("token");
   const { user, login } = useAuthStore();
-  const [viewState, setViewState] = useState('profile');
+  const [view, setView] = useState('profile');
   const [isLoading, setIsLoading] = useState(false);
 
-  const viewToggle = useCallback((view: string) => {
-    setViewState(view);
-  }, []);
 
   useEffect(() => {
     const fetchUser = async (token: string) => {
@@ -83,17 +56,17 @@ export default function DashboardPage() {
       return <LoadingSpinner />;
     }
 
-    switch (viewState) {
+    switch (view) {
       case "profile":
         return (
           <Suspense fallback={<LoadingSpinner />}>
-            <Profile {...user} />
+            <Profile {...(user as User)} />
           </Suspense>
         );
       case "settings":
         return (
           <Suspense fallback={<LoadingSpinner />}>
-            <Settings {...user} />
+            <Settings {...(user as User)} />
           </Suspense>
         );
       case "mint":
@@ -105,22 +78,28 @@ export default function DashboardPage() {
       default:
         return (
           <Suspense fallback={<LoadingSpinner />}>
-            <Profile {...user} />
+            <Profile {...(user as User)} />
           </Suspense>
         );
     }
-  }, [viewState, user]);
+  }, [view, user]);
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <DashNav toggleView={viewToggle} />
-      <div className="flex flex-col px-5 mt-4 lg:px-8 min-h-screen">
-        {renderContent}
-        <div className="mt-8">
-          <LogoutButton />
-        </div>
+
+      {/* Add top padding to account for fixed navbar */}
+      <div className="pt-16">
+        <DashNav toggleView={setView} />
+
+        <main className="container mx-auto px-4 py-8">
+          {/* Content with additional spacing */}
+          <div className="pt-4">
+            {renderContent}
+          </div>
+        </main>
       </div>
+
       <Footer />
     </div>
   );
