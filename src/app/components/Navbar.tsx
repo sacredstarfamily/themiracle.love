@@ -30,11 +30,12 @@ export default function Navbar() {
 
   return (
     <nav
-      className="fixed top-0 left-0 right-0 z-50 shadow-md border-b border-gray-200"
+      className="sticky top-0 left-0 right-0 z-50 shadow-md border-b border-gray-200"
       style={{
         background: "linear-gradient(#fcb6d9, #bc0061)",
         transform: "translateZ(0)", // Force hardware acceleration
         willChange: "transform", // Optimize for position changes
+        backfaceVisibility: "hidden", // Optimize rendering
         height: "4rem" // Explicitly set navbar height for consistent spacing
       }}
     >

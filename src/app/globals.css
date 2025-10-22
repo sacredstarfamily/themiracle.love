@@ -439,57 +439,76 @@
     }
   }
 
-  /* Enhanced PayPal zoid error prevention */
-  .paypal-button-container {
-    position: relative;
-    z-index: 1;
-    min-height: 60px;
-    isolation: isolate; /* Prevent zoid conflicts */
+  /* Shopping cart sticky modal positioning - centered in viewport */
+  .shopping-cart-sticky-modal {
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 60 !important; /* Higher than navbar */
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    backface-visibility: hidden !important;
   }
 
-  /* Prevent PayPal button interference */
-  .paypal-button-container iframe {
-    z-index: 1 !important;
-    pointer-events: auto !important;
+  .shopping-cart-modal-content {
+    background: white !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    max-width: 32rem !important;
+    width: 100% !important;
+    max-height: 95vh !important; /* Increased from 90vh to 95vh */
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    backface-visibility: hidden !important;
+    z-index: 61 !important;
   }
 
-  /* Enhanced PayPal component stability */
-  [data-paypal-checkout] {
-    position: relative;
-    z-index: auto;
-    min-height: 300px;
-    isolation: isolate;
+  /* Mobile adjustments for sticky cart modal */
+  @media (max-width: 768px) {
+    .shopping-cart-sticky-modal {
+      padding: 0.5rem !important;
+    }
+    
+    .shopping-cart-modal-content {
+      max-height: 98vh !important; /* Increased from 95vh to 98vh for mobile */
+      border-radius: 0.75rem !important;
+    }
   }
 
-  /* Prevent rapid button destruction/creation */
-  .paypal-buttons-stable {
-    transition: opacity 0.2s ease-in-out;
+  /* Override existing shopping cart styles */
+  .shopping-cart-container {
+    position: sticky !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    z-index: 60 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 1rem !important;
+    background-color: rgba(0, 0, 0, 0.5) !important;
+    transform: translateZ(0) !important;
+    will-change: transform !important;
+    backface-visibility: hidden !important;
   }
 
-  .paypal-buttons-stable.loading {
-    opacity: 0.7;
-    pointer-events: none;
-  }
+/* ...existing code... */
 
-  /* Zoid container stabilization */
-  #paypal-checkout-sdk__container {
-    z-index: 10000 !important;
-    position: relative !important;
-    isolation: isolate;
-  }
-
-  /* Prevent zoid cleanup conflicts during navigation */
-  .paypal-checkout-context {
-    position: relative !important;
-    z-index: 10001 !important;
-    isolation: isolate;
-  }
-}
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
 }
 
 /* Web3 Modal specific styles - keep outside layers */

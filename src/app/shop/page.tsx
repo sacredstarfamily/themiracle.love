@@ -106,13 +106,13 @@ export default function ShopPage() {
         <div>
             <Navbar />
 
-            {/* Fixed positioning for cart button, accounting for sticky navbar */}
-            <div className="fixed top-20 right-4 z-40">
+            {/* Sticky positioning for cart button - top right */}
+            <div className="sticky top-16 right-0 z-40 flex justify-end pr-6 pt-2">
                 <ShoppingCartBtn onClick={handleCartToggle} />
             </div>
 
             {/* Main content with top padding for sticky navbar */}
-            <main className="container mx-auto px-4 py-8 pt-24 min-h-screen">
+            <main className="container mx-auto px-4 py-8 pt-6 min-h-screen">
 
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Shop</h1>

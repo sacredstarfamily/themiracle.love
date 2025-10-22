@@ -306,13 +306,28 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
     return (
         <div
-            className="fixed inset-0 bg-black bg-opacity-50 z-50 flex justify-end"
+            className="sticky top-0 left-0 right-0 bottom-0 z-50 flex items-center justify-center p-4"
+            style={{
+                position: 'sticky',
+                top: '0',
+                left: '0',
+                right: '0',
+                bottom: '0',
+                zIndex: 50,
+                width: '100vw',
+                height: '100vh',
+                backgroundColor: 'rgba(0, 0, 0, 0.5)',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                padding: '1rem'
+            }}
             onClick={handleBackdropClick}
         >
-            <div className="bg-white w-full max-w-md h-full shadow-lg transform transition-transform overflow-hidden flex flex-col">
+            <div className="bg-white w-full max-w-lg max-h-[95vh] rounded-2xl shadow-2xl transform transition-transform overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="sticky top-0 z-10 flex items-center justify-between p-4 border-b bg-white shadow-sm">
-                    <h2 className="text-xl font-semibold text-gray-800">
+                <div className="sticky top-0 z-10 flex items-center justify-between p-6 border-b bg-white shadow-sm rounded-t-2xl">
+                    <h2 className="text-2xl font-semibold text-gray-800">
                         Shopping Cart ({displayCart.length})
                     </h2>
                     <button
@@ -321,16 +336,16 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                         className="p-2 hover:bg-gray-100 rounded-full transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         aria-label="Close cart"
                     >
-                        <FontAwesomeIcon icon={faTimes} className="w-5 h-5 text-gray-600" />
+                        <FontAwesomeIcon icon={faTimes} className="w-6 h-6 text-gray-600" />
                     </button>
                 </div>
 
                 {/* Status Messages */}
                 {paymentError && (
-                    <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 mx-4 mt-2 rounded relative">
+                    <div className="bg-red-50 border border-red-200 text-red-700 px-6 py-4 mx-6 mt-4 rounded-lg relative">
                         <button
                             onClick={() => setPaymentError(null)}
-                            className="absolute top-1 right-2 text-red-400 hover:text-red-600"
+                            className="absolute top-2 right-3 text-red-400 hover:text-red-600 text-lg"
                         >
                             ×
                         </button>
@@ -340,13 +355,13 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                 )}
 
                 {paymentSuccess && (
-                    <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 mx-4 mt-2 rounded">
+                    <div className="bg-green-50 border border-green-200 text-green-700 px-6 py-4 mx-6 mt-4 rounded-lg">
                         <p className="text-sm">✅ Payment successful! Thank you for your purchase.</p>
                     </div>
                 )}
 
                 {(isProcessing || processingRef.current) && (
-                    <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 mx-4 mt-2 rounded">
+                    <div className="bg-blue-50 border border-blue-200 text-blue-700 px-6 py-4 mx-6 mt-4 rounded-lg">
                         <p className="text-sm">💳 Processing payment... Please wait.</p>
                     </div>
                 )}
@@ -354,23 +369,23 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                 {/* Scrollable Content */}
                 <div className="flex-1 overflow-y-auto">
                     {/* Cart Items */}
-                    <div className="p-4">
+                    <div className="p-6">
                         {displayCart.length === 0 ? (
-                            <div className="text-center py-12 text-gray-500">
-                                <div className="mb-4">
-                                    <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <div className="text-center py-16 text-gray-500">
+                                <div className="mb-6">
+                                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-1.1 5H19M7 13v6a2 2 0 002 2h6a2 2 0 002-2v-6" />
                                     </svg>
                                 </div>
-                                <p className="text-lg font-medium">Your cart is empty</p>
+                                <p className="text-xl font-medium">Your cart is empty</p>
                                 <p className="text-sm mt-2">Add some items to get started!</p>
                             </div>
                         ) : (
                             <div className="space-y-4 mb-6">
                                 {displayCart.map((displayItem) => (
-                                    <div key={displayItem.productId} className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 transition-colors">
+                                    <div key={displayItem.productId} className="flex items-center space-x-4 p-4 border rounded-xl hover:bg-gray-50 transition-colors">
                                         {/* Item Image */}
-                                        <div className="relative w-16 h-16 bg-gray-100 rounded-md overflow-hidden flex-shrink-0">
+                                        <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
                                             <Image
                                                 src={getImageUrl(displayItem.image_url)}
                                                 alt={displayItem.name || 'Product'}
@@ -386,29 +401,29 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
                                         {/* Item Details */}
                                         <div className="flex-1 min-w-0">
-                                            <h3 className="font-medium text-sm truncate text-gray-900">
+                                            <h3 className="font-medium text-base truncate text-gray-900">
                                                 {displayItem.name}
                                             </h3>
-                                            <p className="text-gray-600 text-xs">
+                                            <p className="text-gray-600 text-sm">
                                                 ${displayItem.price.toFixed(2)} each
                                             </p>
 
                                             {/* Quantity Controls */}
-                                            <div className="flex items-center space-x-2 mt-2">
+                                            <div className="flex items-center space-x-3 mt-3">
                                                 <button
                                                     onClick={() => updateQuantity(displayItem.productId, displayItem.quantity - 1)}
                                                     disabled={isProcessing || processingRef.current}
-                                                    className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors disabled:opacity-50"
+                                                    className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full text-sm hover:bg-gray-300 transition-colors disabled:opacity-50"
                                                 >
                                                     <FontAwesomeIcon icon={faMinus} className="w-3 h-3" />
                                                 </button>
-                                                <span className="text-sm font-medium w-8 text-center">
+                                                <span className="text-base font-medium w-10 text-center">
                                                     {displayItem.quantity}
                                                 </span>
                                                 <button
                                                     onClick={() => updateQuantity(displayItem.productId, displayItem.quantity + 1)}
                                                     disabled={isProcessing || processingRef.current}
-                                                    className="w-6 h-6 flex items-center justify-center bg-gray-200 rounded text-xs hover:bg-gray-300 transition-colors disabled:opacity-50"
+                                                    className="w-8 h-8 flex items-center justify-center bg-gray-200 rounded-full text-sm hover:bg-gray-300 transition-colors disabled:opacity-50"
                                                 >
                                                     <FontAwesomeIcon icon={faPlus} className="w-3 h-3" />
                                                 </button>
@@ -417,13 +432,13 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
                                         {/* Item Total & Remove */}
                                         <div className="text-right flex-shrink-0">
-                                            <p className="font-medium text-sm text-gray-900">
+                                            <p className="font-medium text-lg text-gray-900">
                                                 ${(displayItem.price * displayItem.quantity).toFixed(2)}
                                             </p>
                                             <button
                                                 onClick={() => removeFromCart(displayItem.productId, true)}
                                                 disabled={isProcessing || processingRef.current}
-                                                className="mt-2 p-1 text-red-500 hover:bg-red-50 rounded transition-colors disabled:opacity-50"
+                                                className="mt-2 p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors disabled:opacity-50"
                                             >
                                                 <FontAwesomeIcon icon={faTrash} className="w-4 h-4" />
                                             </button>
@@ -436,9 +451,9 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
                     {/* Payment Section */}
                     {displayCart.length > 0 && (
-                        <div className="border-t bg-white p-4 space-y-4">
+                        <div className="border-t bg-white p-6 space-y-6">
                             {/* Total */}
-                            <div className="flex justify-between items-center text-lg font-semibold text-gray-900 border-t pt-2">
+                            <div className="flex justify-between items-center text-xl font-semibold text-gray-900 border-t pt-4">
                                 <span>Total ({itemCount} items):</span>
                                 <span>${totalValue.toFixed(2)} USD</span>
                             </div>
@@ -454,7 +469,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                     }
                                 }}
                                 disabled={isProcessing || processingRef.current}
-                                className="w-full py-2 text-sm text-gray-600 border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="w-full py-3 text-sm text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 Clear Cart
                             </button>
@@ -464,7 +479,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                 {paymentError && (
                                     <button
                                         onClick={handleRetryPayment}
-                                        className="w-full mb-2 py-2 px-4 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
+                                        className="w-full mb-4 py-3 px-4 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
                                     >
                                         Try Payment Again
                                     </button>
@@ -478,7 +493,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                         />
                                     </div>
                                 ) : (
-                                    <div className="flex items-center justify-center py-6 bg-gray-50 rounded">
+                                    <div className="flex items-center justify-center py-8 bg-gray-50 rounded-lg">
                                         <Spinner size="lg" />
                                         <span className="ml-4 text-sm text-gray-600">
                                             {isProcessing || processingRef.current ? 'Processing payment...' :
@@ -491,7 +506,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                             </div>
 
                             {/* Security Notice */}
-                            <div className="text-center pb-4">
+                            <div className="text-center pb-2">
                                 <p className="text-xs text-gray-500">🔒 Secure payment powered by PayPal</p>
                                 <p className="text-xs text-gray-400 mt-1">Your payment information is encrypted and secure</p>
                                 {(isProcessing || processingRef.current) && (
@@ -502,7 +517,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                             </div>
 
                             {/* Extra space for PayPal forms */}
-                            <div className="h-80 w-full"></div>
+                            <div className="h-40 w-full"></div>
                         </div>
                     )}
                 </div>
