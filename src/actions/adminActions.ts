@@ -107,7 +107,7 @@ export async function addItem(
             const paypal = new PayPalInterface();
 
             const imageUrl = isDevelopment
-                ? "https://via.placeholder.com/400x400.png?text=Product+Image"
+                ? `https://localhost:3000${iurl.img_url.replace('/public', '')}`
                 : `https://themiracle.love${iurl.img_url.replace('/public', '')}`;
 
             // Validate and clean the data before sending to PayPal
@@ -354,7 +354,7 @@ export async function updateLocalFromPayPal(paypalItem: {
                     description: paypalItem.description || `PayPal product: ${paypalItem.name}`,
                     price: 0, // PayPal catalog doesn't store prices the same way
                     quantity: 0, // Default quantity for PayPal-only items
-                    img_url: paypalItem.image_url || '/placeholder.png',
+                    img_url: paypalItem.image_url || '/images.jpeg',
                     paypal_product_id: paypalItem.id,
                     paypal_sync_status: PayPalSyncStatus.PAYPAL_ONLY,
                     paypal_data: {
