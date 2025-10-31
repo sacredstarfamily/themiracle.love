@@ -59,7 +59,7 @@ function Profile(user: User) {
     }, [walletProvider, address, isSigningMessage]);
 
     return (
-        <div className="flex flex-1 flex-col justify-center align-middle">
+        <div className="h-screen flex flex-1 flex-col justify-center align-middle">
             <h1 className="self-center text-3xl mb-6">Profile</h1>
             <div className="flex flex-col justify-center align-middle space-y-4">
                 <h2 className="self-center text-xl">{user.name}</h2>

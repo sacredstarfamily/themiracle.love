@@ -43,7 +43,7 @@ export default function Navbar() {
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href="/" className="text-2xl font-bold text-white hover:text-gray-200 transition-colors">
+            <Link href="/" className="text-2xl pr-5  font-bold text-white hover:text-gray-200 transition-colors">
               themiracle.love
             </Link>
           </div>

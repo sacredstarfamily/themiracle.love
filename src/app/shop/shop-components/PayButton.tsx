@@ -133,7 +133,7 @@ export default function PayButton() {
     };
 
     return (
-        <div className="flex flex-col align-middle justify-center">
+        <div className="flex flex-col align-middle justify-center" style={{ zIndex: 10, position: "relative" }}>
             <div className="w-full max-w-md mx-auto text-center">
                 <h1 className="text-2xl font-bold mb-4">Donate to themiracle</h1>
 
@@ -151,13 +151,13 @@ export default function PayButton() {
                                     : 'bg-white text-blue-500 border-blue-500 hover:bg-blue-50 hover:shadow-sm'
                                     }`}
                             >
-                                ${amount}
+                                <span className="font-sans">$</span>{amount}
                             </button>
                         ))}
                     </div>
                     {selectedAmount !== null && (
                         <p className="text-xs text-gray-500 mt-2">
-                            Selected: <span className="font-semibold text-blue-600">${selectedAmount}</span>
+                            Selected: <span className="font-semibold text-blue-600"><span className="font-sans">$</span>{selectedAmount}</span>
                         </p>
                     )}
                     {selectedAmount === null && (

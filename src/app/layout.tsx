@@ -34,6 +34,28 @@ export default async function RootLayout({
           type="font/ttf"
           crossOrigin="anonymous"
         />
+        {/* Facebook SDK */}
+        <script
+          async
+          defer
+          crossOrigin="anonymous"
+          src="https://connect.facebook.net/en_US/sdk.js"
+        ></script>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              window.fbAsyncInit = function() {
+                FB.init({
+                  appId      : '683091743530359',
+                  cookie     : true,
+                  xfbml      : true,
+                  version    : 'v19.0'
+                });
+                FB.AppEvents.logPageView();
+              };
+            `
+          }}
+        />
         <style dangerouslySetInnerHTML={{
           __html: `
             html {

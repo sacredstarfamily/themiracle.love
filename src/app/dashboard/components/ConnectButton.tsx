@@ -12,8 +12,8 @@ export default function ConnectButton() {
 
     return (
         <>
-            <li className="text-lg" onClick={() => open()}>{isConnected ? (<p>View Wallet</p>) : (<p>ConnectWallet</p>)}</li>
-            <li className="text-lg" onClick={() => open({ view: 'Networks' })}>Choose Network</li>
+            <li className="text-base cursor-pointer" onClick={() => open()}>{isConnected ? (<p>View Wallet</p>) : (<p>ConnectWallet</p>)}</li>
+            <li className="text-base cursor-pointer" onClick={() => open({ view: 'Networks' })}>Choose Network</li>
         </>
     )
 }

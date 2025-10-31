@@ -58,8 +58,8 @@ export function NItemCard({ item }: ItemCardProps) {
     const imageUrl = getImageUrl(item.img_url);
 
     return (
-        <Card className="overflow-hidden transition-all hover:shadow-xl hover:scale-[1.02] duration-300 bg-gradient-to-br from-pink-50 via-white to-pink-50 border-2 border-pink-200 hover:border-pink-300 rounded-3xl">
-            <div className="relative aspect-square overflow-hidden bg-gradient-to-br from-pink-100 to-purple-100 rounded-t-3xl">
+        <Card className="overflow-hidden transition-all hover:shadow-xl hover:scale-[1.02] duration-300 bg-white border-2 border-pink-200 hover:border-pink-300 rounded-3xl">
+            <div className="relative aspect-square overflow-hidden bg-white rounded-t-3xl">
                 <Image
                     src={imageError ? '/uploads/images.jpeg' : imageUrl}
                     alt={item.name}
@@ -69,8 +69,7 @@ export function NItemCard({ item }: ItemCardProps) {
                     unoptimized={imageUrl.startsWith('/uploads/')}
                 />
 
-                {/* Bubblegummy overlay gradient */}
-                <div className="absolute inset-0 bg-gradient-to-t from-pink-200/40 via-transparent to-purple-200/20 rounded-t-3xl"></div>
+                {/* Removed overlay for image clarity */}
 
                 {/* Floating status badge */}
                 <div className="absolute top-4 right-4">
@@ -85,14 +84,13 @@ export function NItemCard({ item }: ItemCardProps) {
                 <div className="absolute bottom-4 right-16 w-2 h-2 bg-purple-300 rounded-full animate-pulse"></div>
             </div>
 
-            <CardHeader className="text-center space-y-3 bg-gradient-to-br from-white to-pink-50 px-6 py-6">
+            <CardHeader className="text-center space-y-3 bg-white px-6 py-6">
                 <CardTitle className="font-cheri text-2xl text-center text-balance text-gray-800 hover:text-pink-600 transition-colors leading-tight">
                     {item.name}
                 </CardTitle>
-
             </CardHeader>
 
-            <CardContent className=" bg-gradient-to-br from-white to-pink-50 px-6 pb-6">
+            <CardContent className="bg-white px-6 pb-6">
                 <CardDescription className="text-sm leading-relaxed text-center text-gray-600 hover:text-gray-700 transition-colors">
                     {showFullDescription ? description : shortDescription}
                 </CardDescription>
@@ -101,18 +99,18 @@ export function NItemCard({ item }: ItemCardProps) {
                 {hasLongDescription && (
                     <button
                         onClick={() => setShowFullDescription(!showFullDescription)}
-                        className="mt-3 text-xs text-pink-500 hover:text-pink-600 font-medium transition-colors underline"
+                        className="mt-3 text-xs bg-white text-pink-500 hover:text-pink-600 font-medium transition-colors underline"
                     >
                         {showFullDescription ? 'See Less' : 'See More'}
                     </button>
                 )}
             </CardContent>
-            <CardContent className="text-center bg-gradient-to-br from-white to-pink-50 px-6 pb-6">
+            <CardContent className="text-center bg-white px-6 pb-6">
                 <div className="text-4xl font-sans font-bold text-center bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 bg-clip-text text-transparent">
                     ${item.price.toFixed(2)}
                 </div>
             </CardContent>
-            <CardFooter className="bg-gradient-to-br from-pink-50 to-purple-50 border-t border-pink-100 p-6 rounded-b-3xl">
+            <CardFooter className="bg-white border-t border-pink-100 p-6 rounded-b-3xl">
                 <Button
                     onClick={handleAddToCart}
                     disabled={(item.inventory_tracked && item.quantity === 0) || !item.is_active}

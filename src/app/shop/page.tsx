@@ -116,7 +116,7 @@ export default function ShopPage() {
 
                 <div className="text-center mb-8">
                     <h1 className="text-4xl font-bold text-gray-900 mb-2">Shop</h1>
-                    <PayButton />
+
                     <p className="text-lg text-gray-600">Discover amazing products from TheMiracle.Love</p>
 
                 </div>
@@ -134,7 +134,7 @@ export default function ShopPage() {
                     </div>
                 )}
             </main>
-
+            <PayButton />
             <ShoppingCart isOpen={isCartOpen} onClose={handleCartClose} />
             <Footer />
         </div>
