@@ -56,18 +56,20 @@ export default function AuthPage() {
       return;
     }
     window.FB.login(
-      async (response: FBLoginResponse) => {
+      (response: FBLoginResponse) => {
         if (response.authResponse) {
-          window.FB?.api("/me", { fields: "name,email" }, async (userInfo: FBUserInfo) => {
+          window.FB?.api("/me", { fields: "name,email" }, (userInfo: FBUserInfo) => {
             // Add user to database
-            const formData = new FormData();
-            formData.append("name", userInfo.name || "");
-            formData.append("email", userInfo.email || "");
-            formData.append("password", "facebook_oauth"); // Use a dummy password
+            (async () => {
+              const formData = new FormData();
+              formData.append("name", userInfo.name || "");
+              formData.append("email", userInfo.email || "");
+              formData.append("password", "facebook_oauth"); // Use a dummy password
 
-            await createUser(undefined, formData);
-            // Optionally redirect or show success
-            window.location.href = "/dashboard";
+              await createUser(undefined, formData);
+              // Optionally redirect or show success
+              window.location.href = "/dashboard";
+            })();
           });
         } else {
           alert("Facebook login failed or cancelled.");
