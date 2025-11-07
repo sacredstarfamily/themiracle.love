@@ -20,6 +20,7 @@ export default function AuthPage() {
       await loadFacebookSDK();
       const loginResponse = await facebookLogin("instagram_basic");
       if (loginResponse.authResponse) {
+        console.log(loginResponse);
         /* // const userInfo = await facebookGetUser("name,email");
          const formData = new FormData();
          formData.append("name", userInfo.name || "");

@@ -88,7 +88,7 @@ export function loadFacebookSDK(): Promise<void> {
     });
 }
 
-export function facebookLogin(scope: string = "email"): Promise<FBLoginResponse> {
+export function facebookLogin(scope: string = "email, public_profile"): Promise<FBLoginResponse> {
     return new Promise((resolve, reject) => {
         // Facebook SDK requires HTTPS for login
         if (window.location.protocol !== "https:") {
