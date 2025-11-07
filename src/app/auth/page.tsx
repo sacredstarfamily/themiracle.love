@@ -1,33 +1,92 @@
 "use client";
-import { facebookLogin, loadFacebookSDK } from "@/lib/facebook";
-import { useEffect } from "react";
+import { facebookGetUser, facebookLogin, loadFacebookSDK } from "@/lib/facebook";
+import Image from "next/image";
+import { useEffect, useState } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import FormWrapper from "./FormWrapper";
 
+type FBUser = { id?: string; name?: string; email?: string; picture?: string };
+type FBPictureResponse = { data?: { url?: string } };
+
 export default function AuthPage() {
+  const [fbUser, setFbUser] = useState<FBUser | null>(null);
+
   useEffect(() => {
-    loadFacebookSDK();
-    if (window.FB) {
-      window.FB.getLoginStatus(function (response) {
-        console.log(response);
-      });
-    }
+    loadFacebookSDK().then(() => {
+      if (typeof window !== "undefined" && window.FB) {
+        window.FB.getLoginStatus(function (response) {
+          if (response.authResponse) {
+            facebookGetUser("id,name,email,picture").then((userInfo) => {
+              if (userInfo.id && window.FB) {
+                window.FB.api(
+                  `/${userInfo.id}/picture?type=large&redirect=false`,
+                  {},
+                  (picRes: unknown) => {
+                    let url: string | undefined;
+                    if (
+                      typeof picRes === "object" &&
+                      picRes !== null &&
+                      "data" in picRes
+                    ) {
+                      const pic = picRes as FBPictureResponse;
+                      if (typeof pic.data?.url === "string") {
+                        url = pic.data.url;
+                      }
+                    }
+                    setFbUser({
+                      ...userInfo,
+                      picture: url,
+                    });
+                  }
+                );
+              } else {
+                setFbUser(userInfo);
+              }
+            });
+          }
+        });
+      }
+    });
   }, []);
 
   const handleFacebookLogin = async () => {
     try {
       await loadFacebookSDK();
-      const loginResponse = await facebookLogin("instagram_basic");
+      const loginResponse = await facebookLogin("public_profile,email");
       if (loginResponse.authResponse) {
-        console.log(loginResponse);
-        /* // const userInfo = await facebookGetUser("name,email");
-         const formData = new FormData();
-         formData.append("name", userInfo.name || "");
-         formData.append("email", userInfo.email || "");
-         formData.append("password", "facebook_oauth");
-         await createUser(undefined, formData);
-         window.location.href = "/dashboard"; */
+        const userInfo = await facebookGetUser("id,name,email,picture");
+        if (userInfo.id && typeof window !== "undefined" && window.FB) {
+          window.FB.api(
+            `/${userInfo.id}/picture?type=large&redirect=false`,
+            {},
+            (picRes: unknown) => {
+              let url: string | undefined;
+              if (
+                typeof picRes === "object" &&
+                picRes !== null &&
+                "data" in picRes
+              ) {
+                const pic = picRes as FBPictureResponse;
+                if (typeof pic.data?.url === "string") {
+                  url = pic.data.url;
+                }
+              }
+              setFbUser({
+                ...userInfo,
+                picture: url,
+              });
+            }
+          );
+        } else {
+          setFbUser(userInfo);
+        }
+        /* // const formData = new FormData();
+         // formData.append("name", userInfo.name || "");
+         // formData.append("email", userInfo.email || "");
+         // formData.append("password", "facebook_oauth");
+         // await createUser(undefined, formData);
+         // window.location.href = "/dashboard"; */
       }
     } catch (err) {
       alert(err instanceof Error ? err.message : "Facebook login failed.");
@@ -37,12 +96,10 @@ export default function AuthPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-
-      {/* Add top padding to account for fixed navbar */}
       <div className="pt-20">
         <div className="flex min-h-full flex-1 flex-col justify-center px-6 py-12 lg:px-8">
           <FormWrapper />
-          <div className="mt-8 flex flex-col items-center">
+          <div className="mt-8 flex flex-col items-center space-y-4">
             <button
               type="button"
               onClick={handleFacebookLogin}
@@ -53,10 +110,40 @@ export default function AuthPage() {
               </svg>
               Continue with Facebook
             </button>
+
+            {/* Facebook Like Button */}
+            <div className="mt-4">
+              <div
+                className="fb-like"
+                data-href="https://themiracle.love"
+                data-width=""
+                data-layout="button"
+                data-action="like"
+                data-size="large"
+                data-share="true"
+              ></div>
+            </div>
+
+            {/* Facebook Profile Indicator */}
+            {fbUser && fbUser.picture && (
+              <div className="flex flex-col items-center mt-4">
+                <Image
+                  src={fbUser.picture}
+                  alt="Facebook Profile"
+                  width={64}
+                  height={64}
+                  className="rounded-full border-2 border-blue-500 shadow"
+                  unoptimized
+                />
+                <span className="mt-2 text-blue-700 font-semibold">
+                  {fbUser.name}
+                </span>
+                <span className="text-xs text-gray-500">{fbUser.email}</span>
+              </div>
+            )}
           </div>
         </div>
       </div>
-
       <Footer />
     </div>
   );
