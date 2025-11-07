@@ -9,8 +9,17 @@ import FormWrapper from "./FormWrapper";
 type FBUser = { id?: string; name?: string; email?: string; picture?: string };
 type FBPictureResponse = { data?: { url?: string } };
 
+// Extend FBStatic to include the 'ui' method for sharing
+declare global {
+  interface FBStatic {
+    ui?: (params: Record<string, unknown>, callback?: (response: unknown) => void) => void;
+  }
+}
+
 export default function AuthPage() {
   const [fbUser, setFbUser] = useState<FBUser | null>(null);
+  const [likeCount, setLikeCount] = useState<number | null>(null);
+  const [hasLiked, setHasLiked] = useState(false);
 
   useEffect(() => {
     loadFacebookSDK().then(() => {
@@ -46,6 +55,22 @@ export default function AuthPage() {
             });
           }
         });
+
+        // Fix: Use FB.api with correct callback signature for like count
+        window.FB.api(
+          '/themiracle.love',
+          { fields: 'fan_count' },
+          function (response: unknown) {
+            if (
+              typeof response === "object" &&
+              response !== null &&
+              "fan_count" in response &&
+              typeof (response as { fan_count?: number }).fan_count === "number"
+            ) {
+              setLikeCount((response as { fan_count: number }).fan_count);
+            }
+          }
+        );
       }
     });
   }, []);
@@ -93,6 +118,33 @@ export default function AuthPage() {
     }
   };
 
+  // Custom Like handler (simulate like by opening the page in a new tab)
+  const handleCustomLike = () => {
+    setHasLiked(true);
+    window.open("https://www.facebook.com/themiracle.love", "_blank", "noopener,noreferrer");
+  };
+
+  // Custom Share handler using FB.ui
+  const handleCustomShare = () => {
+    if (typeof window !== "undefined" && window.FB && typeof window.FB.ui === "function") {
+      window.FB.ui(
+        {
+          method: "share",
+          href: "https://themiracle.love",
+        },
+        () => {
+          // No-op, response not used
+        }
+      );
+    } else {
+      window.open(
+        `https://www.facebook.com/sharer/sharer.php?u=https://themiracle.love`,
+        "_blank",
+        "noopener,noreferrer"
+      );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
@@ -111,17 +163,32 @@ export default function AuthPage() {
               Continue with Facebook
             </button>
 
-            {/* Facebook Like Button */}
-            <div className="mt-4">
-              <div
-                className="fb-like"
-                data-href="https://themiracle.love"
-                data-width=""
-                data-layout="button"
-                data-action="like"
-                data-size="large"
-                data-share="true"
-              ></div>
+            {/* Custom Facebook Like & Share Buttons */}
+            <div className="mt-4 flex flex-col items-center gap-2">
+              <button
+                type="button"
+                onClick={handleCustomLike}
+                className={`px-4 py-2 rounded-lg font-bold transition-colors bg-blue-600 text-white hover:bg-blue-700 flex items-center gap-2 ${hasLiked ? "opacity-70" : ""}`}
+                disabled={hasLiked}
+              >
+                <svg width="20" height="20" fill="currentColor" className="mr-1">
+                  <path d="M9 18V8H5.5A1.5 1.5 0 0 0 4 9.5v7A1.5 1.5 0 0 0 5.5 18H9zm2-10V18h5.5A1.5 1.5 0 0 0 18 16.5v-7A1.5 1.5 0 0 0 16.5 8H11zm-1-6a2 2 0 0 1 2 2v2H8V4a2 2 0 0 1 2-2z" />
+                </svg>
+                {hasLiked ? "Liked!" : "Like"}
+                {likeCount !== null && (
+                  <span className="ml-2 text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">{likeCount} fans</span>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={handleCustomShare}
+                className="px-4 py-2 rounded-lg font-bold transition-colors bg-blue-500 text-white hover:bg-blue-600 flex items-center gap-2"
+              >
+                <svg width="20" height="20" fill="currentColor" className="mr-1">
+                  <path d="M15 8a3 3 0 0 0-2.83 2H7a3 3 0 0 0 0 6h5.17A3 3 0 1 0 15 8zm-6 7a1 1 0 1 1 0-2h6a1 1 0 1 1 0 2H9zm6-7a1 1 0 1 1 0 2h-6a1 1 0 1 1 0-2h6z" />
+                </svg>
+                Share
+              </button>
             </div>
 
             {/* Facebook Profile Indicator */}
