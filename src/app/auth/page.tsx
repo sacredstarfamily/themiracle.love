@@ -1,82 +1,36 @@
-'use client';
-import { createUser } from "@/actions/actions";
+"use client";
+import { facebookLogin, loadFacebookSDK } from "@/lib/facebook";
 import { useEffect } from "react";
 import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import FormWrapper from "./FormWrapper";
 
-declare global {
-  interface FBUserInfo {
-    id?: string;
-    name?: string;
-    email?: string;
-  }
-
-  interface FBLoginResponse {
-    authResponse?: {
-      accessToken?: string;
-      userID?: string;
-      expiresIn?: number;
-      signedRequest?: string;
-    };
-    status?: string;
-  }
-
-  interface FBStatic {
-    init(config: { appId: string; cookie?: boolean; xfbml?: boolean; version?: string }): void;
-    login(callback: (response: FBLoginResponse) => void, options?: { scope?: string }): void;
-    api(path: string, params?: { fields?: string } | undefined, callback?: (userInfo: FBUserInfo) => void): void;
-  }
-
-  interface Window {
-    fbAsyncInit?: () => void;
-    FB?: FBStatic;
-  }
-}
-
 export default function AuthPage() {
-  // Facebook login handler
   useEffect(() => {
-    // Only run on client
-    if (typeof window === "undefined" || !window.FB) return;
-
-    window.fbAsyncInit = function () {
-      window.FB?.init({
-        appId: "683091743530359",
-        cookie: true,
-        xfbml: true,
-        version: "v19.0",
+    loadFacebookSDK();
+    if (window.FB) {
+      window.FB.getLoginStatus(function (response) {
+        console.log(response);
       });
-    };
+    }
   }, []);
 
-  const handleFacebookLogin = () => {
-    if (!window.FB) {
-      alert("Facebook SDK not loaded.");
-      return;
+  const handleFacebookLogin = async () => {
+    try {
+      await loadFacebookSDK();
+      const loginResponse = await facebookLogin("public_profile,email");
+      if (loginResponse.authResponse) {
+        /* // const userInfo = await facebookGetUser("name,email");
+         const formData = new FormData();
+         formData.append("name", userInfo.name || "");
+         formData.append("email", userInfo.email || "");
+         formData.append("password", "facebook_oauth");
+         await createUser(undefined, formData);
+         window.location.href = "/dashboard"; */
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Facebook login failed.");
     }
-    window.FB.login(
-      (response: FBLoginResponse) => {
-        if (response.authResponse) {
-          window.FB?.api("/me", { fields: "name,email" }, (userInfo: FBUserInfo) => {
-            // Add user to database
-            (async () => {
-              const formData = new FormData();
-              formData.append("name", userInfo.name || "");
-              formData.append("email", userInfo.email || "");
-              formData.append("password", "facebook_oauth"); // Use a dummy password
-
-              await createUser(undefined, formData);
-              // Optionally redirect or show success
-              window.location.href = "/dashboard";
-            })();
-          });
-        } else {
-          alert("Facebook login failed or cancelled.");
-        }
-      },
-      { scope: "email" }
-    );
   };
 
   return (

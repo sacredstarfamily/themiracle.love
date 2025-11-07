@@ -4,7 +4,6 @@ import ContextProvider from "./context/index";
 import PayPalProvider from "./context/paypal-provider";
 import "./globals.css";
 
-// Import FontAwesome configuration
 import "../lib/fontawesome";
 
 const cheri = localFont({
@@ -34,28 +33,6 @@ export default async function RootLayout({
           type="font/ttf"
           crossOrigin="anonymous"
         />
-        {/* Facebook SDK */}
-        <script
-          async
-          defer
-          crossOrigin="anonymous"
-          src="https://connect.facebook.net/en_US/sdk.js"
-        ></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              window.fbAsyncInit = function() {
-                FB.init({
-                  appId      : '683091743530359',
-                  cookie     : true,
-                  xfbml      : true,
-                  version    : 'v19.0'
-                });
-                FB.AppEvents.logPageView();
-              };
-            `
-          }}
-        />
         <style dangerouslySetInnerHTML={{
           __html: `
             html {
@@ -81,6 +58,19 @@ export default async function RootLayout({
           backfaceVisibility: 'hidden'
         }}
       >
+        {/* Load Facebook SDK on the client by injecting the script only in the browser */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(d, s, id){
+  var js, fjs = d.getElementsByTagName(s)[0];
+  if (d.getElementById(id)) {return;}
+  js = d.createElement(s); js.id = id;
+  js.src = "https://connect.facebook.net/en_US/sdk.js";
+  fjs.parentNode.insertBefore(js, fjs);
+})(document, 'script', 'facebook-jssdk');`,
+          }}
+        />
+
         <PayPalProvider>
           <ContextProvider cookies={cookies}>{children}</ContextProvider>
         </PayPalProvider>

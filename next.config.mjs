@@ -122,4 +122,16 @@ nextConfig.optimizePackageImports = [
   'zustand',
 ];
 
+// Enable HTTPS for local development
+if (process.env.NODE_ENV === 'development') {
+  import('fs').then(fs => {
+    nextConfig.server = {
+      https: {
+        key: fs.readFileSync('./localhost-key.pem'),
+        cert: fs.readFileSync('./localhost-cert.pem'),
+      }
+    };
+  });
+}
+
 export default nextConfig;

@@ -9,6 +9,7 @@
     "migrate-db": "npx prisma migrate dev",
     "generate": "npx prisma generate",
     "dev": "next dev",
+    "dev:https": "next dev --experimental-https",
     "dev:turbo": "next dev --turbo",
     "build": "next build",
     "start": "next start",
