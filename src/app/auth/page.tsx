@@ -53,7 +53,7 @@ export default function AuthPage() {
   const handleFacebookLogin = async () => {
     try {
       await loadFacebookSDK();
-      const loginResponse = await facebookLogin("public_profile,email");
+      const loginResponse = await facebookLogin("instagram_basic, instagram_content_publish, public_profile, email");
       if (loginResponse.authResponse) {
         const userInfo = await facebookGetUser("id,name,email,picture");
         if (userInfo.id && typeof window !== "undefined" && window.FB) {
