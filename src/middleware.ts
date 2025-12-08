@@ -1,6 +1,6 @@
+import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 import { decrypt } from './lib/sessions'
-import { cookies } from 'next/headers'
 // 1. Specify protected and public routes
 const protectedRoutes = ['/dashboard', '/settings']
 const adminRoutes = ['/admin']
@@ -15,7 +15,8 @@ export default async function middleware(req: NextRequest) {
     const isLoginRoute = loginRoute.includes(path)
 
     // 3. Decrypt the session from the cookie
-    const cookie = cookies().get('session')?.value
+    const cookiesInstance = await cookies();
+    const cookie = cookiesInstance.get('session')?.value
     const session = await decrypt(cookie)
     if (isAdminRoute && session?.email !== 'seeloveinfinite@gmail.com') {
         return NextResponse.redirect(new URL('/dashboard', req.nextUrl.toString()))

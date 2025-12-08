@@ -1,8 +1,8 @@
 "use client";
 
 import { addItem } from "@/actions/adminActions";
-import { useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
 
 const INITIAL_STATE = {
     data: "", // Changed from null to empty string to match expected type
@@ -38,7 +38,7 @@ interface AddItemFormProps {
 }
 
 export default function AddItemForm({ onItemAdded }: AddItemFormProps = {}) {
-    const [formState, formAction] = useFormState(addItem, INITIAL_STATE);
+    const [formState, formAction] = useActionState(addItem, INITIAL_STATE);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [lastSubmissionResult, setLastSubmissionResult] = useState<string>("");
 

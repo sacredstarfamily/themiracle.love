@@ -6,7 +6,7 @@ import useAuthStore from '@/context/auth-context';
 import useCartStore from '@/context/cart-context';
 import { faMinus, faPlus, faTimes, faTrash } from "@fortawesome/free-solid-svg-icons";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
-import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
+// Removed invalid import for PayPalButtonsComponentOptions
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -141,16 +141,16 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
 
     if (!isOpen) return null;
 
-    const paypalButtonOptions: PayPalButtonsComponentOptions = {
+    const paypalButtonOptions = {
         style: {
-            color: "blue",
-            shape: "rect",
-            label: "pay",
+            color: "blue" as const,
+            shape: "rect" as const,
+            label: "pay" as const, // Fix: use allowed string literal
             height: 45,
-            layout: "vertical",
+            layout: "vertical" as const,
             tagline: false,
         },
-        createOrder: async (data, actions) => {
+        createOrder: async (data: any, actions: any) => {
             if (processingRef.current || isProcessing) {
                 throw new Error("Order creation already in progress");
             }
@@ -385,7 +385,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                 {displayCart.map((displayItem) => (
                                     <div key={displayItem.productId} className="flex items-center space-x-4 p-4 border rounded-xl hover:bg-gray-50 transition-colors">
                                         {/* Item Image */}
-                                        <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden flex-shrink-0">
+                                        <div className="relative w-20 h-20 bg-gray-100 rounded-lg overflow-hidden shrink-0">
                                             <Image
                                                 src={getImageUrl(displayItem.image_url)}
                                                 alt={displayItem.name || 'Product'}
@@ -431,7 +431,7 @@ export default function ShoppingCart({ isOpen, onClose }: ShoppingCartProps) {
                                         </div>
 
                                         {/* Item Total & Remove */}
-                                        <div className="text-right flex-shrink-0">
+                                        <div className="text-right shrink-0">
                                             <p className="font-medium text-lg text-gray-900">
                                                 ${(displayItem.price * displayItem.quantity).toFixed(2)}
                                             </p>

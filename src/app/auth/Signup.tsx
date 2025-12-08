@@ -1,9 +1,9 @@
 import { createUser, getUser } from "@/actions/actions";
-import { useFormState, useFormStatus } from "react-dom";
-import { useEffect } from "react";
-import { redirect } from "next/navigation";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
+import { redirect } from "next/navigation";
+import { useActionState, useEffect } from "react";
+import { useFormStatus } from "react-dom";
 const SIGNUP_INITIAL_STATE = {
   data: "",
 };
@@ -13,7 +13,7 @@ const SignupButton = () => {
     <button
       type="submit"
       disabled={pending}
-      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
     >
       {pending ? "..." : "Sign Up"}
     </button>
@@ -22,7 +22,7 @@ const SignupButton = () => {
 
 export default function Signup() {
   const { login } = useAuthStore();
-  const [signupState, signupAction] = useFormState(
+  const [signupState, signupAction] = useActionState(
     createUser,
     SIGNUP_INITIAL_STATE,
   );

@@ -4,8 +4,8 @@ import { getUser, loginUser, requestPasswordUpdate } from "@/actions/actions";
 
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState, useFormStatus } from "react-dom";
+import { useActionState, useEffect, useState } from "react";
+import { useFormStatus } from "react-dom";
 import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
@@ -18,7 +18,7 @@ function LoginButton() {
     <button
       type="submit"
       disabled={pending}
-      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
     >
       {pending ? <p>Signing in</p> : <p>Sign in</p>}
     </button>
@@ -28,8 +28,8 @@ export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const { login } = useAuthStore();
-  const [formState, formAction] = useFormState(loginUser, INITIAL_STATE);
-  const [requestFormState, requestFormAction] = useFormState(requestPasswordUpdate, INITIAL_STATE);
+  const [formState, formAction] = useActionState(loginUser, INITIAL_STATE);
+  const [requestFormState, requestFormAction] = useActionState(requestPasswordUpdate, INITIAL_STATE);
   const [requestPassword, setRequestPassword] = useState(false);
   useEffect(() => {
     const getandset = async (token: string) => {
@@ -80,7 +80,7 @@ export default function Login() {
                 <button
                   type="submit"
 
-                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
                 >
                   Reqest Password Reset
                 </button>

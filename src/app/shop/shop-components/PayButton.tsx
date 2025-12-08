@@ -1,6 +1,6 @@
 'use client';
 import { Spinner } from "@/components/icons";
-import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
+import type { PayPalButtonsComponentProps } from "@paypal/react-paypal-js";
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -74,7 +74,7 @@ export default function PayButton() {
         );
     }
 
-    const buttonStyles: PayPalButtonsComponentOptions = {
+    const buttonStyles: PayPalButtonsComponentProps = {
         style: {
             color: "gold",
             shape: "pill",

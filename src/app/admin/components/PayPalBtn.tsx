@@ -1,19 +1,18 @@
 'use client';
 import { PayPalButtons, usePayPalScriptReducer } from "@paypal/react-paypal-js";
-import { PayPalButtonsComponentOptions } from "@paypal/paypal-js/types/components/buttons";
 
 
 
 export default function PayPalBtn(id: string) {
 
     const [{ isResolved }] = usePayPalScriptReducer();
-    const buttonStyles: PayPalButtonsComponentOptions = {
+    const buttonStyles = {
         style: {
-            color: "gold",
-            shape: "pill",
-            label: "donate",
+            color: "gold" as const,
+            shape: "pill" as const,
+            label: "donate" as const,
             disableMaxWidth: true,
-            height: 25,
+            height: 35,
         },
         createOrder: (data, actions) => {
             console.log(data)

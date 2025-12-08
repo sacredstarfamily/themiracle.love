@@ -1,7 +1,7 @@
-import 'server-only'
-import { SignJWT, jwtVerify } from 'jose'
-import { SessionPayload } from './definitions';
+import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
+import 'server-only';
+import { SessionPayload } from './definitions';
 import prisma from './pc';
 
 
@@ -35,7 +35,8 @@ export async function decrypt(session: string | undefined = '') {
 export async function createSession(email: string) {
   const expiresAt: Date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   const session = await encrypt({ email, expiresAt })
-  cookies().set(
+  const cookiesInstance = await cookies();
+  cookiesInstance.set(
     'session',
     session,
     {
@@ -72,16 +73,18 @@ export async function createSession(email: string) {
 }
 
 export async function logoutUser() {
-
-  cookies().set(
+  const expiresAt: Date = new Date(Date.now() - 1000); // Set to past
+  const cookiesInstance = await cookies();
+  cookiesInstance.set(
     'session',
     '',
     {
       httpOnly: true,
       secure: true,
-      expires: new Date(0),
+      expires: expiresAt,
       sameSite: 'lax',
-    });
-
+      path: '/',
+    }
+  );
 }
 

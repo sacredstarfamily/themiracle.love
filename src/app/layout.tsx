@@ -19,7 +19,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const cookies = headers().get("cookie");
+  const cookies = (await headers()).get("cookie");
 
   return (
     <html lang="en" className="h-full bg-pink-300 p-0 m-0">

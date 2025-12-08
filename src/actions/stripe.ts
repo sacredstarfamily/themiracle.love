@@ -5,8 +5,8 @@ import type { Stripe } from "stripe";
 import { headers } from "next/headers";
 
 import { CURRENCY } from "@/app/config";
-import { formatAmountForStripe } from "@/lib/stripe-helper";
 import { stripe } from "@/lib/stripe";
+import { formatAmountForStripe } from "@/lib/stripe-helper";
 
 export async function createCheckoutSession(
     data: FormData,
@@ -15,7 +15,8 @@ export async function createCheckoutSession(
         "uiMode",
     ) as Stripe.Checkout.SessionCreateParams.UiMode;
 
-    const origin: string = headers().get("origin") as string;
+    const headersInstance = await headers();
+    const origin: string = headersInstance.get("origin") as string;
 
     const checkoutSession: Stripe.Checkout.Session =
         await stripe.checkout.sessions.create({
