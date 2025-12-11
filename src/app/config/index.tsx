@@ -1,13 +1,12 @@
-import { cookieStorage, createStorage } from "wagmi";
+import { SolanaAdapter } from "@reown/appkit-adapter-solana/react";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import {
   mainnet,
   sepolia,
   solana,
-  solanaTestnet,
   solanaDevnet,
+  solanaTestnet,
 } from "@reown/appkit/networks";
-import { SolanaAdapter } from "@reown/appkit-adapter-solana/react";
 import {
   PhantomWalletAdapter,
   SolflareWalletAdapter,
@@ -32,8 +31,5 @@ export const wagmiAdapter = new WagmiAdapter({
   projectId,
   networks,
   ssr: true,
-  storage: createStorage({
-    storage: cookieStorage,
-  }),
 });
 export const config = wagmiAdapter.wagmiConfig;

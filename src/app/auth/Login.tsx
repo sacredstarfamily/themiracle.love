@@ -18,7 +18,8 @@ function LoginButton() {
     <button
       type="submit"
       disabled={pending}
-      className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
+      style={{ backgroundColor: pending ? '#6366f1' : '#4f46e5' }}
+      className="flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
     >
       {pending ? <p>Signing in</p> : <p>Sign in</p>}
     </button>

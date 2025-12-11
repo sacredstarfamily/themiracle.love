@@ -1,5 +1,5 @@
 "use server";
-import { Prisma } from "@prisma/client";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import bcrypt from "bcrypt";
 import { randomUUID } from "crypto";
 import { z } from "zod";
@@ -74,7 +74,7 @@ export async function createUser(
     return { ...prevState, data: y };
   } catch (error) {
     if (
-      error instanceof Prisma.PrismaClientKnownRequestError &&
+      error instanceof PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
       return { ...prevState, data: "fail" };
@@ -351,7 +351,7 @@ export async function syncPayPalCatalog() {
               name: paypalItem.name,
               img_url: paypalItem.image_url || existingItem.img_url,
               paypal_sync_status: 'SYNCED',
-              paypal_data: paypalItem as Prisma.InputJsonValue,
+              paypal_data: paypalItem as any,
               paypal_last_sync: new Date(),
             }
           });
@@ -365,7 +365,7 @@ export async function syncPayPalCatalog() {
               quantity: 0,
               paypal_product_id: paypalItem.id,
               paypal_sync_status: 'PAYPAL_ONLY',
-              paypal_data: paypalItem as Prisma.InputJsonValue,
+              paypal_data: paypalItem as any,
               paypal_last_sync: new Date(),
               description: paypalItem.description || `PayPal product: ${paypalItem.name}`,
               is_active: true,
@@ -389,13 +389,13 @@ export async function syncPayPalCatalog() {
           total_products: paypalItems.length,
           last_sync: new Date(),
           sync_status: 'SYNCED',
-          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as Prisma.InputJsonValue
+          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as any
         },
         update: {
           total_products: paypalItems.length,
           last_sync: new Date(),
           sync_status: syncResults.errors > 0 ? 'ERROR' : 'SYNCED',
-          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as Prisma.InputJsonValue
+          catalog_metadata: { total_items: paypalItems.length, environment: process.env.NODE_ENV } as any
         }
       });
     } catch (catalogError) {
