@@ -93,9 +93,6 @@ export async function createUser(
     return { ...prevState, data: `Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
 }
-}
-
-
 export async function loginUser(
   prevState: LoginData | undefined,
   formData: FormData,
