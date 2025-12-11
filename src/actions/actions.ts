@@ -1,6 +1,6 @@
 "use server";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { randomUUID } from "crypto";
 import { z } from "zod";
 import prisma from "../lib/pc";
