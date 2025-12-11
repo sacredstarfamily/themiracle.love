@@ -24,17 +24,23 @@ export async function createUser(
   prevState: LoginData | undefined,
   formData: FormData,
 ) {
+  console.log("createUser called with formData:", { name: formData.get("name"), email: formData.get("email") });
   const name = formData.get("name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  console.log("Extracted data:", { name, email, passwordLength: password.length });
   const hashedPassword = await bcrypt.hash(password, 10);
+  console.log("Password hashed successfully");
   const expiresAt: Date = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
   const y = await createSession(email);
+  console.log("Session created:", y);
 
 
   try {
     signUpSchema.parse({ name, email, password });
+    console.log("Zod validation passed");
   } catch (error) {
+    console.log("Zod validation failed:", error);
     if (error instanceof z.ZodError) {
       return { ...prevState, data: "fail" };
     }
@@ -49,6 +55,7 @@ export async function createUser(
         sessionToken: y
       },
     });
+    console.log("User created in DB:", user.id);
     await prisma.session.create({
       data: {
         userId: user.id,
@@ -57,14 +64,16 @@ export async function createUser(
       }
     }
     );
+    console.log("Session created in DB");
 
     if (!isDev) {
+      console.log("Not dev, fetching completeSignup");
       const check = await fetch("https://themiracle.love/completeSignup.php", {
         method: "POST",
         body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
       });
       const data = await check.json();
-      console.log(data)
+      console.log("completeSignup response:", data, "status:", check.status);
 
       if (check.status === 200) {
 
@@ -73,6 +82,7 @@ export async function createUser(
     }
     return { ...prevState, data: y };
   } catch (error) {
+    console.log("Error in createUser:", error);
     if (
       error instanceof PrismaClientKnownRequestError &&
       error.code === "P2002"
