@@ -1,6 +1,6 @@
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import { decrypt } from './lib/sessions'
+import { decrypt } from './lib/jwt'
 // 1. Specify protected and public routes
 const protectedRoutes = ['/dashboard', '/settings']
 const adminRoutes = ['/admin']

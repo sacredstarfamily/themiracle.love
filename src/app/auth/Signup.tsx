@@ -1,14 +1,10 @@
-import { createUser, getUser } from "@/actions/actions";
+import { getUser } from "@/actions/actions";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
-import { useActionState, useEffect } from "react";
-import { useFormStatus } from "react-dom";
-const SIGNUP_INITIAL_STATE = {
-  data: "",
-};
-const SignupButton = () => {
-  const { pending } = useFormStatus();
+import { useEffect, useState } from "react";
+
+const SignupButton = ({ pending }: { pending: boolean }) => {
   return (
     <button
       type="submit"
@@ -23,10 +19,25 @@ const SignupButton = () => {
 
 export default function Signup() {
   const { login } = useAuthStore();
-  const [signupState, signupAction] = useActionState(
-    createUser,
-    SIGNUP_INITIAL_STATE,
-  );
+  const [signupState, setSignupState] = useState({ data: "" });
+  const [pending, setPending] = useState(false);
+
+  const handleSubmit = async (formData: FormData) => {
+    setPending(true);
+    try {
+      const response = await fetch('/api/signup', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      setSignupState(result);
+    } catch (error) {
+      setSignupState({ data: `Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+    } finally {
+      setPending(false);
+    }
+  };
+
   useEffect(() => {
     const getandset = async (token: string) => {
       console.log("from getandset")
@@ -42,14 +53,14 @@ export default function Signup() {
 
       redirect("/dashboard?token=" + signupState.data)
     }
-  });
+  }, [signupState, login]);
   return (
     <>
       <div className="mt-1 sm:mx-auto sm:w-full sm:max-w-sm">
         <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Sign Up for an account
         </h2>
-        <form action={signupAction} className="space-y-6">
+        <form action={handleSubmit} className="space-y-6">
           <div>
             <label
               htmlFor="name"
@@ -109,7 +120,7 @@ export default function Signup() {
           </div>
           {signupState?.data}
           <div>
-            <SignupButton />
+            <SignupButton pending={pending} />
           </div>
         </form>
       </div>

@@ -67,17 +67,21 @@ export async function createUser(
     console.log("Session created in DB");
 
     if (!isDev) {
-      console.log("Not dev, fetching completeSignup");
-      const check = await fetch("https://themiracle.love/completeSignup.php", {
-        method: "POST",
-        body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
-      });
-      const data = await check.json();
-      console.log("completeSignup response:", data, "status:", check.status);
+      try {
+        console.log("Not dev, fetching completeSignup");
+        const check = await fetch("https://themiracle.love/completeSignup.php", {
+          method: "POST",
+          body: JSON.stringify({ name: name, email: email, verificationToken: user.verificationToken }),
+        });
+        const data = await check.json();
+        console.log("completeSignup response:", data, "status:", check.status);
 
-      if (check.status === 200) {
-
-        return { ...prevState, data: y };
+        if (check.status === 200) {
+          return { ...prevState, data: y };
+        }
+      } catch (fetchError) {
+        console.log("Fetch to completeSignup failed:", fetchError);
+        // Continue without the fetch
       }
     }
     return { ...prevState, data: y };
