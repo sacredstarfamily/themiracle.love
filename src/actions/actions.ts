@@ -87,9 +87,12 @@ export async function createUser(
       error instanceof PrismaClientKnownRequestError &&
       error.code === "P2002"
     ) {
-      return { ...prevState, data: "fail" };
+      return { ...prevState, data: "User with this email already exists" };
     }
+    // For debugging, return error message
+    return { ...prevState, data: `Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}` };
   }
+}
 }
 
 
