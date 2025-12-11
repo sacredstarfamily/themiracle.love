@@ -1,10 +1,10 @@
 'use client';
 
-import { getUser, requestPasswordUpdate } from "@/actions/actions";
+import { getUser } from "@/actions/actions";
 
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
-import { useActionState, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
@@ -22,13 +22,26 @@ function LoginButton({ pending }: { pending: boolean }) {
     </button>
   );
 }
+function RequestPasswordButton({ pending }: { pending: boolean }) {
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      style={{ backgroundColor: pending ? '#6366f1' : '#4f46e5' }}
+      className="flex w-full justify-center rounded-md px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600 disabled:opacity-50"
+    >
+      {pending ? <p>Sending...</p> : <p>Send Reset Link</p>}
+    </button>
+  );
+}
 export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const { login } = useAuthStore();
   const [formState, setFormState] = useState({ data: "" });
   const [pending, setPending] = useState(false);
-  const [requestFormState, requestFormAction] = useActionState(requestPasswordUpdate, INITIAL_STATE);
+  const [requestFormState, setRequestFormState] = useState({ data: "" });
+  const [requestPending, setRequestPending] = useState(false);
   const [requestPassword, setRequestPassword] = useState(false);
 
   const handleSubmit = async (formData: FormData) => {
@@ -47,6 +60,22 @@ export default function Login() {
     }
   };
 
+  const handleRequestSubmit = async (formData: FormData) => {
+    setRequestPending(true);
+    try {
+      const response = await fetch('/api/request-password', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      setRequestFormState(result);
+    } catch (error) {
+      setRequestFormState({ data: `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+    } finally {
+      setRequestPending(false);
+    }
+  };
+
   useEffect(() => {
     const getandset = async (token: string) => {
       const user = await getUser(token);
@@ -62,13 +91,12 @@ export default function Login() {
   return (
     <>
       <div className="mt-1 sm:mx-auto sm:w-full h-full sm:max-w-sm">
-        {requestFormState.data ? <p></p> : <p></p>}
         {requestPassword ? (
           <>
             <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
               Reset Password Request
             </h2>
-            <form action={requestFormAction} className=" space-y-6">
+            <form action={handleRequestSubmit} className=" space-y-6">
 
               <div>
                 <p>{isLoggedIn && "hello"}</p>
@@ -93,13 +121,8 @@ export default function Login() {
 
 
               <div>
-                <button
-                  type="submit"
-
-                  className="flex w-full justify-center rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-semibold leading-6 text-white shadow-sm hover:bg-indigo-500 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600"
-                >
-                  Reqest Password Reset
-                </button>
+                {requestFormState?.data}
+                <RequestPasswordButton pending={requestPending} />
               </div>
             </form>
           </>) : (
