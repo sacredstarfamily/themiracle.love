@@ -1,19 +1,16 @@
 'use client';
 
-import { getUser, loginUser, requestPasswordUpdate } from "@/actions/actions";
+import { getUser, requestPasswordUpdate } from "@/actions/actions";
 
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
 import { useActionState, useEffect, useState } from "react";
-import { useFormStatus } from "react-dom";
 import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
   data: "",
 };
-function LoginButton() {
-  const { pending } = useFormStatus();
-
+function LoginButton({ pending }: { pending: boolean }) {
   return (
     <button
       type="submit"
@@ -29,9 +26,27 @@ export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const { login } = useAuthStore();
-  const [formState, formAction] = useActionState(loginUser, INITIAL_STATE);
+  const [formState, setFormState] = useState({ data: "" });
+  const [pending, setPending] = useState(false);
   const [requestFormState, requestFormAction] = useActionState(requestPasswordUpdate, INITIAL_STATE);
   const [requestPassword, setRequestPassword] = useState(false);
+
+  const handleSubmit = async (formData: FormData) => {
+    setPending(true);
+    try {
+      const response = await fetch('/api/login', {
+        method: 'POST',
+        body: formData,
+      });
+      const result = await response.json();
+      setFormState(result);
+    } catch (error) {
+      setFormState({ data: `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
+    } finally {
+      setPending(false);
+    }
+  };
+
   useEffect(() => {
     const getandset = async (token: string) => {
       const user = await getUser(token);
@@ -42,7 +57,7 @@ export default function Login() {
       getandset(formState?.data);
       redirect("/dashboard?token=" + formState?.data);
     }
-  });
+  }, [formState, login]);
 
   return (
     <>
@@ -92,7 +107,7 @@ export default function Login() {
             <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
               Log in to your account
             </h2>
-            <form action={formAction} className=" space-y-6">
+            <form action={handleSubmit} className=" space-y-6">
 
               <div>
                 <label
@@ -136,7 +151,8 @@ export default function Login() {
               </div>
 
               <div>
-                <LoginButton />
+                {formState?.data}
+                <LoginButton pending={pending} />
                 <div className="text-sm">
                   <button
                     onClick={() => setRequestPassword(true)}
