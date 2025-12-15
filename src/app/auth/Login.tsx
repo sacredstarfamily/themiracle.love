@@ -1,7 +1,5 @@
 'use client';
 
-import { getUser } from "@/actions/actions";
-
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -78,9 +76,18 @@ export default function Login() {
 
   useEffect(() => {
     const getandset = async (token: string) => {
-      const user = await getUser(token);
-      login(user as User);
-      console.log(user);
+      try {
+        const response = await fetch(`/api/user?token=${token}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user');
+        }
+        const user = await response.json();
+        login(user as User);
+        console.log(user);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        // Handle error, maybe set some state
+      }
     };
     if (formState?.data && formState?.data !== "fail") {
       getandset(formState?.data);

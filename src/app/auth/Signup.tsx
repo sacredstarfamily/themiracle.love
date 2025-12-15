@@ -1,4 +1,3 @@
-import { getUser } from "@/actions/actions";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
@@ -41,9 +40,17 @@ export default function Signup() {
   useEffect(() => {
     const getandset = async (token: string) => {
       console.log("from getandset")
-      const user = await getUser(token);
-      login(user as User);
-
+      try {
+        const response = await fetch(`/api/user?token=${token}`);
+        if (!response.ok) {
+          throw new Error('Failed to fetch user');
+        }
+        const user = await response.json();
+        login(user as User);
+      } catch (error) {
+        console.error('Error fetching user:', error);
+        // Handle error
+      }
     };
 
     if (signupState?.data && signupState?.data !== "fail") {
