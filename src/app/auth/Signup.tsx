@@ -1,7 +1,9 @@
+import { createUser } from "@/actions/actions";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useFormState } from 'react-dom';
 
 const SignupButton = ({ pending }: { pending: boolean }) => {
   return (
@@ -18,24 +20,7 @@ const SignupButton = ({ pending }: { pending: boolean }) => {
 
 export default function Signup() {
   const { login } = useAuthStore();
-  const [signupState, setSignupState] = useState({ data: "" });
-  const [pending, setPending] = useState(false);
-
-  const handleSubmit = async (formData: FormData) => {
-    setPending(true);
-    try {
-      const response = await fetch('/api/signup', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      setSignupState(result);
-    } catch (error) {
-      setSignupState({ data: `Signup failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-    } finally {
-      setPending(false);
-    }
-  };
+  const [signupState, signupAction] = useFormState(createUser, { data: "" });
 
   useEffect(() => {
     const getandset = async (token: string) => {
@@ -67,7 +52,7 @@ export default function Signup() {
         <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
           Sign Up for an account
         </h2>
-        <form action={handleSubmit} className="space-y-6">
+        <form action={signupAction} className="space-y-6">
           <div>
             <label
               htmlFor="name"
@@ -127,7 +112,7 @@ export default function Signup() {
           </div>
           {signupState?.data}
           <div>
-            <SignupButton pending={pending} />
+            <SignupButton pending={false} />
           </div>
         </form>
       </div>

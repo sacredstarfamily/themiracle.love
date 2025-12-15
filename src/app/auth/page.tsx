@@ -4,6 +4,8 @@ import Footer from "../components/Footer";
 import Navbar from "../components/Navbar";
 import FormWrapper from "./FormWrapper";
 
+export const runtime = 'nodejs';
+
 
 
 

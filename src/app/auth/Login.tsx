@@ -1,8 +1,10 @@
 'use client';
 
+import { loginUser, requestPasswordUpdate } from "@/actions/actions";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useFormState } from 'react-dom';
 import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
@@ -36,43 +38,9 @@ export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const { login } = useAuthStore();
-  const [formState, setFormState] = useState({ data: "" });
-  const [pending, setPending] = useState(false);
-  const [requestFormState, setRequestFormState] = useState({ data: "" });
-  const [requestPending, setRequestPending] = useState(false);
+  const [loginState, loginAction] = useFormState(loginUser, { data: "" });
+  const [requestState, requestAction] = useFormState(requestPasswordUpdate, { data: "" });
   const [requestPassword, setRequestPassword] = useState(false);
-
-  const handleSubmit = async (formData: FormData) => {
-    setPending(true);
-    try {
-      const response = await fetch('/api/login', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      setFormState(result);
-    } catch (error) {
-      setFormState({ data: `Login failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-    } finally {
-      setPending(false);
-    }
-  };
-
-  const handleRequestSubmit = async (formData: FormData) => {
-    setRequestPending(true);
-    try {
-      const response = await fetch('/api/request-password', {
-        method: 'POST',
-        body: formData,
-      });
-      const result = await response.json();
-      setRequestFormState(result);
-    } catch (error) {
-      setRequestFormState({ data: `Request failed: ${error instanceof Error ? error.message : 'Unknown error'}` });
-    } finally {
-      setRequestPending(false);
-    }
-  };
 
   useEffect(() => {
     const getandset = async (token: string) => {
@@ -89,11 +57,11 @@ export default function Login() {
         // Handle error, maybe set some state
       }
     };
-    if (formState?.data && formState?.data !== "fail") {
-      getandset(formState?.data);
-      redirect("/dashboard?token=" + formState?.data);
+    if (loginState?.data && loginState?.data !== "fail") {
+      getandset(loginState?.data);
+      redirect("/dashboard?token=" + loginState?.data);
     }
-  }, [formState, login]);
+  }, [loginState, login]);
 
   return (
     <>
@@ -103,7 +71,7 @@ export default function Login() {
             <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
               Reset Password Request
             </h2>
-            <form action={handleRequestSubmit} className=" space-y-6">
+            <form action={requestAction} className=" space-y-6">
 
               <div>
                 <p>{isLoggedIn && "hello"}</p>
@@ -128,8 +96,8 @@ export default function Login() {
 
 
               <div>
-                {requestFormState?.data}
-                <RequestPasswordButton pending={requestPending} />
+                {requestState?.data}
+                <RequestPasswordButton pending={false} />
               </div>
             </form>
           </>) : (
@@ -137,7 +105,7 @@ export default function Login() {
             <h2 className="mt-5 text-center text-2xl font-bold leading-9 tracking-tight text-gray-900">
               Log in to your account
             </h2>
-            <form action={handleSubmit} className=" space-y-6">
+            <form action={loginAction} className=" space-y-6">
 
               <div>
                 <label
@@ -181,8 +149,8 @@ export default function Login() {
               </div>
 
               <div>
-                {formState?.data}
-                <LoginButton pending={pending} />
+                {loginState?.data}
+                <LoginButton pending={false} />
                 <div className="text-sm">
                   <button
                     onClick={() => setRequestPassword(true)}
