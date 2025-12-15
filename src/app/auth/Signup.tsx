@@ -2,8 +2,7 @@ import { createUser } from "@/actions/actions";
 import useAuthStore from "@/context/auth-context";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState } from 'react-dom';
+import { useEffect, useState, useActionState } from "react";
 
 const SignupButton = ({ pending }: { pending: boolean }) => {
   return (
@@ -20,7 +19,7 @@ const SignupButton = ({ pending }: { pending: boolean }) => {
 
 export default function Signup() {
   const { login } = useAuthStore();
-  const [signupState, signupAction] = useFormState(createUser, { data: "" });
+  const [signupState, signupAction] = useActionState(createUser, { data: "" });
 
   useEffect(() => {
     const getandset = async (token: string) => {

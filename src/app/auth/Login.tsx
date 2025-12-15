@@ -3,8 +3,7 @@
 import { loginUser, requestPasswordUpdate } from "@/actions/actions";
 import { User } from "@/lib/definitions";
 import { redirect } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useFormState } from 'react-dom';
+import { useEffect, useState, useActionState } from "react";
 import useAuthStore from '../../context/auth-context';
 
 const INITIAL_STATE = {
@@ -38,8 +37,8 @@ export default function Login() {
   const isLoggedIn = useAuthStore((state) => state.isLoggedIn);
 
   const { login } = useAuthStore();
-  const [loginState, loginAction] = useFormState(loginUser, { data: "" });
-  const [requestState, requestAction] = useFormState(requestPasswordUpdate, { data: "" });
+  const [loginState, loginAction, loginPending] = useActionState(loginUser, { data: "" });
+  const [requestState, requestAction, requestPending] = useActionState(requestPasswordUpdate, { data: "" });
   const [requestPassword, setRequestPassword] = useState(false);
 
   useEffect(() => {
@@ -52,6 +51,7 @@ export default function Login() {
         const user = await response.json();
         login(user as User);
         console.log(user);
+        window.location.href = "/dashboard?token=" + token;
       } catch (error) {
         console.error('Error fetching user:', error);
         // Handle error, maybe set some state
@@ -59,7 +59,6 @@ export default function Login() {
     };
     if (loginState?.data && loginState?.data !== "fail") {
       getandset(loginState?.data);
-      redirect("/dashboard?token=" + loginState?.data);
     }
   }, [loginState, login]);
 
@@ -93,11 +92,17 @@ export default function Login() {
                 </div>
               </div>
 
-
-
               <div>
                 {requestState?.data}
-                <RequestPasswordButton pending={false} />
+                <RequestPasswordButton pending={requestPending} />
+              </div>
+              <div>
+                <button
+                  onClick={() => setRequestPassword(false)}
+                  className="font-semibold text-indigo-600 hover:text-indigo-500"
+                >
+                  Back to login
+                </button>
               </div>
             </form>
           </>) : (
@@ -134,7 +139,6 @@ export default function Login() {
                   >
                     Password
                   </label>
-
                 </div>
                 <div className="mt-2">
                   <input
@@ -150,15 +154,16 @@ export default function Login() {
 
               <div>
                 {loginState?.data}
-                <LoginButton pending={false} />
-                <div className="text-sm">
-                  <button
-                    onClick={() => setRequestPassword(true)}
-                    className="font-semibold text-indigo-600 hover:text-indigo-500"
-                  >
-                    Forgot password?
-                  </button>
-                </div>
+                <LoginButton pending={loginPending} />
+              </div>
+              <div className="text-sm">
+                <button
+                  type="button"
+                  onClick={() => setRequestPassword(true)}
+                  className="font-semibold text-indigo-600 hover:text-indigo-500"
+                >
+                  Forgot password?
+                </button>
               </div>
             </form>
           </>
